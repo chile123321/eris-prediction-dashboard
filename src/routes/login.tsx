@@ -1,111 +1,23 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Eye, EyeOff } from "lucide-react";
-import { useEffect, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ArrowLeft, BriefcaseBusiness, Eye, EyeOff, LockKeyhole, Mail, UserRound } from "lucide-react";
+import { useState } from "react";
+import workplaceImage from "@/assets/eris-workplace.jpg";
+import { ErisLogo } from "@/components/eris/Logo";
 import { Notice } from "@/components/eris/States";
-import { changePassword, getApiErrorMessage, getCurrentUser, isApiUnavailable, login } from "@/lib/eris/api";
+import { changePassword, getApiErrorMessage, getCurrentUser, login, userRole } from "@/lib/eris/api";
+import { pageHead } from "@/lib/eris/head";
 import { useSession } from "@/lib/eris/session";
 
-export const Route = createFileRoute("/login")({
-  head: () => ({
-    meta: [
-      { title: "Đăng nhập · ERIS" },
-      { name: "description", content: "Đăng nhập hệ thống ERIS — Employee Retention Intelligence System." },
-      { property: "og:title", content: "Đăng nhập · ERIS" },
-      { property: "og:description", content: "Đăng nhập hệ thống ERIS — Employee Retention Intelligence System." },
-    ],
-  }),
-  component: LoginPage,
-});
+export const Route = createFileRoute("/login")({ head: () => pageHead("Đăng nhập · ERIS", "Đăng nhập không gian quản trị, nhân sự hoặc nhân viên trên hệ thống ERIS."), component: LoginPage });
 
 function LoginPage() {
-  const { state, setUser } = useSession();
-  const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [show, setShow] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [info, setInfo] = useState("");
-  const [changeToken, setChangeToken] = useState<string | null>(null);
-  const [otp, setOtp] = useState("");
-  const [next, setNext] = useState("");
-  const [confirm, setConfirm] = useState("");
-
-  useEffect(() => {
-    if (state.status === "signedIn") void navigate({ to: "/ai-analysis" });
-  }, [state, navigate]);
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (busy) return;
-    setBusy(true);
-    setError("");
-    setInfo("");
-    try {
-      const r = await login(email.trim(), password);
-      if (r.accessToken) setUser(r.user ?? (await getCurrentUser()));
-      else if (r.passwordChangeToken) setChangeToken(r.passwordChangeToken);
-    } catch (err) {
-      setError(isApiUnavailable(err) ? "Không kết nối được ERIS API. Vui lòng thử lại khi backend đang chạy." : getApiErrorMessage(err, "Đăng nhập không thành công."));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function activate(e: React.FormEvent) {
-    e.preventDefault();
-    if (busy || !changeToken) return;
-    if (next !== confirm) return setError("Mật khẩu xác nhận không khớp.");
-    setBusy(true);
-    setError("");
-    try {
-      await changePassword(changeToken, password, otp.trim(), next);
-      setChangeToken(null);
-      setPassword("");
-      setOtp("");
-      setNext("");
-      setConfirm("");
-      setInfo("Đã kích hoạt tài khoản. Vui lòng đăng nhập lại bằng mật khẩu mới.");
-    } catch (err) {
-      setError(getApiErrorMessage(err, "Không đổi được mật khẩu."));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="panel w-full max-w-[420px] p-6">
-        <p className="text-sm font-semibold tracking-tight text-primary">ERIS</p>
-        <h1 className="mt-1 text-2xl font-semibold">{changeToken ? "Kích hoạt tài khoản" : "Đăng nhập"}</h1>
-        {state.status === "unavailable" && <div className="mt-4"><Notice tone="warning">ERIS API hiện không phản hồi. Đăng nhập cần backend ERIS đang chạy.</Notice></div>}
-        {info && <div className="mt-4"><Notice tone="info">{info}</Notice></div>}
-        {error && <div className="mt-4"><Notice tone="error">{error}</Notice></div>}
-        {!changeToken ? (
-          <form className="mt-5 space-y-4" onSubmit={submit}>
-            <label className="block text-sm font-medium">Email<input className="field mt-1" type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} /></label>
-            <label className="block text-sm font-medium">
-              Mật khẩu
-              <span className="relative mt-1 block">
-                <input className="field pr-11" type={show ? "text" : "password"} autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-                <button type="button" className="absolute inset-y-0 right-0 w-11 text-muted-foreground" aria-label={show ? "Ẩn mật khẩu" : "Hiện mật khẩu"} onClick={() => setShow((s) => !s)}>
-                  {show ? <EyeOff className="mx-auto h-4 w-4" /> : <Eye className="mx-auto h-4 w-4" />}
-                </button>
-              </span>
-            </label>
-            <button type="submit" className="btn btn-primary w-full" disabled={busy}>{busy ? "Đang đăng nhập…" : "Đăng nhập"}</button>
-          </form>
-        ) : (
-          <form className="mt-5 space-y-4" onSubmit={activate}>
-            <p className="text-sm text-muted-foreground">Nhập mã OTP đã gửi tới email và đặt mật khẩu mới.</p>
-            <label className="block text-sm font-medium">Mã OTP<input className="field tabular mt-1" inputMode="numeric" autoComplete="one-time-code" required value={otp} onChange={(e) => setOtp(e.target.value)} /></label>
-            <label className="block text-sm font-medium">Mật khẩu mới<input className="field mt-1" type="password" autoComplete="new-password" required value={next} onChange={(e) => setNext(e.target.value)} /></label>
-            <label className="block text-sm font-medium">Xác nhận mật khẩu<input className="field mt-1" type="password" autoComplete="new-password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} /></label>
-            <button type="submit" className="btn btn-primary w-full" disabled={busy}>{busy ? "Đang xử lý…" : "Kích hoạt"}</button>
-            <button type="button" className="btn btn-secondary w-full" onClick={() => setChangeToken(null)}>Quay lại đăng nhập</button>
-          </form>
-        )}
-      </div>
-    </main>
-  );
+  const { setUser } = useSession(); const navigate = useNavigate();
+  const [portal, setPortal] = useState<"management" | "employee">("management");
+  const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [show, setShow] = useState(false);
+  const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const [info, setInfo] = useState(""); const [changeToken, setChangeToken] = useState<string | null>(null);
+  const [otp, setOtp] = useState(""); const [next, setNext] = useState(""); const [confirm, setConfirm] = useState("");
+  function destination(user: Parameters<typeof userRole>[0]) { const role = userRole(user); return role === "ADMIN" ? "/users" as const : role === "EMPLOYEE" ? "/my-surveys" as const : "/ai-analysis" as const; }
+  async function submit(event: React.FormEvent) { event.preventDefault(); if (busy) return; setBusy(true); setError(""); setInfo(""); try { const result = await login(email.trim(), password); if (result.accessToken) { const user = result.user ?? await getCurrentUser(); setUser(user); await navigate({ to: destination(user) }); } else if (result.passwordChangeToken) setChangeToken(result.passwordChangeToken); } catch (reason) { setError(getApiErrorMessage(reason, "Đăng nhập không thành công. Vui lòng kiểm tra kết nối ERIS.")); } finally { setBusy(false); } }
+  async function activate(event: React.FormEvent) { event.preventDefault(); if (busy || !changeToken) return; setError(""); if (!/^\d{6}$/.test(otp)) return setError("Mã OTP phải gồm đúng 6 chữ số."); if (next.length < 8) return setError("Mật khẩu mới phải có ít nhất 8 ký tự."); if (next !== confirm) return setError("Mật khẩu xác nhận không khớp."); setBusy(true); try { await changePassword(changeToken, password, otp, next); setChangeToken(null); setPassword(""); setOtp(""); setNext(""); setConfirm(""); setInfo("Đã kích hoạt tài khoản. Vui lòng đăng nhập lại bằng mật khẩu mới."); } catch (reason) { setError(getApiErrorMessage(reason, "Không kích hoạt được tài khoản.")); } finally { setBusy(false); } }
+  return <main className="grid min-h-screen bg-mint lg:grid-cols-[1.08fr_.92fr]"><section className="relative flex items-center justify-center px-5 py-10 sm:px-10 lg:px-16"><div className="w-full max-w-xl"><div className="flex items-center justify-between"><ErisLogo /><Link to="/" className="btn h-10 w-10 bg-card/60 px-0 text-primary" aria-label="Về trang giới thiệu"><ArrowLeft className="h-5 w-5" /></Link></div><div className="mt-12 sm:mt-16"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Chào mừng trở lại</p><h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">{changeToken ? "Thiết lập tài khoản" : portal === "management" ? "Đăng nhập quản lý" : "Cổng nhân viên"}</h1><p className="mt-3 text-sm leading-6 text-muted-foreground">Chọn đúng không gian; quyền truy cập thực tế được xác thực từ tài khoản ERIS của bạn.</p></div>{!changeToken && <div className="mt-7 grid grid-cols-2 gap-2 rounded-xl bg-card/65 p-1.5" role="tablist" aria-label="Cổng đăng nhập"><button type="button" role="tab" aria-selected={portal === "management"} className={`btn h-11 ${portal === "management" ? "bg-card text-primary shadow-soft" : "text-muted-foreground"}`} onClick={() => setPortal("management")}><BriefcaseBusiness className="h-4 w-4" />HR & Quản lý</button><button type="button" role="tab" aria-selected={portal === "employee"} className={`btn h-11 ${portal === "employee" ? "bg-card text-primary shadow-soft" : "text-muted-foreground"}`} onClick={() => setPortal("employee")}><UserRound className="h-4 w-4" />Nhân viên</button></div>}{info && <div className="mt-4"><Notice tone="info">{info}</Notice></div>}{error && <div className="mt-4"><Notice tone="error">{error}</Notice></div>}{!changeToken ? <form className="mt-6 space-y-5" onSubmit={submit}><label className="input-label"><span className="flex items-center gap-2"><Mail className="h-4 w-4 text-muted-foreground" />Email</span><input className="field mt-2 h-12 bg-card" type="email" autoComplete="username" placeholder="Nhập email tài khoản" required value={email} onChange={(event) => setEmail(event.target.value)} /></label><label className="input-label"><span className="flex items-center gap-2"><LockKeyhole className="h-4 w-4 text-muted-foreground" />Mật khẩu</span><span className="relative mt-2 block"><input className="field h-12 bg-card pr-12" type={show ? "text" : "password"} autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} /><button type="button" className="absolute inset-y-0 right-0 w-12 text-muted-foreground" aria-label={show ? "Ẩn mật khẩu" : "Hiện mật khẩu"} onClick={() => setShow((value) => !value)}>{show ? <EyeOff className="mx-auto h-5 w-5" /> : <Eye className="mx-auto h-5 w-5" />}</button></span></label><button type="submit" className="btn btn-primary h-12 w-full text-base" disabled={busy}>{busy ? "Đang đăng nhập…" : "Đăng nhập"}</button></form> : <form className="mt-6 space-y-4" onSubmit={activate}><p className="rounded-lg border bg-card/60 p-3 text-sm leading-6 text-muted-foreground">Mã OTP đã được yêu cầu gửi đến email của bạn. Hoàn tất thiết lập để chuyển tài khoản sang trạng thái hoạt động.</p><label className="input-label">Mã OTP<input className="field tabular mt-1.5 h-12 bg-card tracking-[0.25em]" inputMode="numeric" autoComplete="one-time-code" maxLength={6} required value={otp} onChange={(event) => setOtp(event.target.value.replace(/\D/g, ""))} /></label><label className="input-label">Mật khẩu mới<input className="field mt-1.5 h-12 bg-card" type="password" autoComplete="new-password" required value={next} onChange={(event) => setNext(event.target.value)} /></label><label className="input-label">Xác nhận mật khẩu<input className="field mt-1.5 h-12 bg-card" type="password" autoComplete="new-password" required value={confirm} onChange={(event) => setConfirm(event.target.value)} /></label><button type="submit" className="btn btn-primary h-12 w-full" disabled={busy}>{busy ? "Đang xử lý…" : "Kích hoạt tài khoản"}</button><button type="button" className="btn btn-secondary w-full" onClick={() => setChangeToken(null)}>Quay lại đăng nhập</button></form>}<div className="mt-6 flex flex-col items-center gap-4 text-sm"><p className="text-center leading-6 text-muted-foreground">Tài khoản do tổ chức của bạn cung cấp. Liên hệ quản trị viên nếu không thể đăng nhập.</p><Link to="/forgot-password" className="font-semibold text-primary hover:underline">Quên mật khẩu?</Link><Link to="/preview" className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-card/60 px-4 py-2 text-xs font-medium text-primary">Chưa có backend? <span className="font-semibold">Xem thử giao diện</span></Link></div><p className="mt-10 text-center text-xs text-muted-foreground">© 2026 ERIS · Employee Retention Intelligence System</p></div></section><aside className="relative hidden overflow-hidden lg:block"><img src={workplaceImage} alt="Hai đồng nghiệp bắt tay trong văn phòng hiện đại" className="absolute inset-0 h-full w-full object-cover" width={1280} height={1536} loading="eager" /><div className="absolute inset-0 bg-foreground/35" /><div className="absolute inset-x-0 bottom-0 p-12 text-primary-foreground xl:p-16"><p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-foreground/75">ERIS · People Experience</p><h2 className="mt-4 max-w-md text-4xl font-semibold leading-tight tracking-tight">Kết nối con người.<br />Kiến tạo gắn kết.</h2><p className="mt-4 max-w-md leading-7 text-primary-foreground/85">Tạo trải nghiệm nhân viên tử tế ngay từ ngày đầu tiên và đồng hành trong suốt hành trình.</p></div></aside></main>;
 }

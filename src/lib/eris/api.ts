@@ -285,3 +285,64 @@ export const generateAiPolicyRecommendations = (resultId: number, save: boolean,
     method: "POST",
     body: JSON.stringify({ save, limit }),
   });
+
+/* ---------- Verified auth, directory, audit and survey contracts ---------- */
+export function requestPasswordReset(email: string) {
+  return request<{ message: string }>("/auth/forgot-password", { method: "POST", body: JSON.stringify({ email }) });
+}
+export function resetPassword(email: string, otp: string, newPassword: string) {
+  return request<{ message: string }>("/auth/reset-password", { method: "POST", body: JSON.stringify({ email, otp, newPassword }) });
+}
+export function createHrAccount(input: { email: string; fullName: string; hireDate: string }) {
+  return request<{ data?: ApiUser & { emailDelivery?: string } } & ApiUser>("/auth/user_register", {
+    method: "POST", body: JSON.stringify({ email: input.email, full_name: input.fullName.trim(), hireDate: input.hireDate }),
+  });
+}
+export function listUsers(params: { page?: number; limit?: number; search?: string; status?: string } = {}) {
+  const query = new URLSearchParams({ page: String(params.page ?? 1), limit: String(params.limit ?? 100) });
+  if (params.search) query.set("search", params.search);
+  if (params.status) query.set("status", params.status);
+  return request<{ data: ApiUser[]; pagination?: { page: number; limit: number; total: number; hasMore: boolean } }>(`/users?${query}`, { cache: "no-store" });
+}
+export async function getUserById(id: number) {
+  const result = await request<ApiUser | { data: ApiUser }>(`/users/${id}`, { cache: "no-store" });
+  return "data" in result ? result.data : result;
+}
+export async function updateUserStatus(id: number, status: "ACTIVE" | "INACTIVE") {
+  const result = await request<ApiUser | { data: ApiUser }>(`/users/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) });
+  return "data" in result ? result.data : result;
+}
+export type AuditLogEntry = { id: number; userId: number | null; entityType: string | null; entityId: number | string | null; action: string | null; createdAt: string; actor: { id: number; email: string; fullName: string | null } | null };
+export type AuditLogDetail = AuditLogEntry & { oldValue: unknown; newValue: unknown };
+export const listAuditLogs = () => request<{ data: AuditLogEntry[] }>("/audit-logs", { cache: "no-store" });
+export const getAuditLog = (id: number) => request<{ data: AuditLogDetail }>(`/audit-logs/${id}`, { cache: "no-store" });
+
+export type EmployeeEducation = { id?: number; educationLevel: string | null; fieldOfStudy: string | null; institution: string | null; graduationYear: number | null; status?: string };
+export type EmployeeProfile = { id: number; employeeCode: string; fullName: string; email: string; phone: string | null; dateOfBirth: string | null; gender: string | null; departmentId: number; departmentName?: string | null; positionId: number; hireDate: string; employmentType: string | null; employmentStatus: string; currentSalary: string | number | null; educations?: EmployeeEducation[]; account?: { email: string; status: string } };
+export function listEmployeeProfiles(options: { page?: number; limit?: number; search?: string; departmentId?: number; employmentStatus?: string } = {}) {
+  const query = new URLSearchParams({ page: String(options.page ?? 1), limit: String(options.limit ?? 100) });
+  if (options.search) query.set("q", options.search);
+  if (options.departmentId) query.set("departmentId", String(options.departmentId));
+  if (options.employmentStatus) query.set("employmentStatus", options.employmentStatus);
+  return request<{ data: EmployeeProfile[] }>(`/employees?${query}`, { cache: "no-store" });
+}
+export function getEmployeeProfile(id: number) { return request<EmployeeProfile>(`/employees/${id}`, { cache: "no-store" }); }
+export function updateEmployeeProfile(id: number, changes: Record<string, unknown>) { return request<{ data: EmployeeProfile }>(`/employees/${id}`, { method: "PATCH", body: JSON.stringify(changes) }); }
+export type EmployeeImportResult = { row: number; status: "CREATED" | "FAILED"; statusCode?: number; message?: string; data?: EmployeeProfile };
+export type EmployeeImportResponse = { total: number; created: number; failed: number; results: EmployeeImportResult[] };
+export function importEmployees(file: File) { const body = new FormData(); body.append("file", file); return request<EmployeeImportResponse>("/employees/import", { method: "POST", body }); }
+
+export type SurveySummary = { id: number; title: string; description: string | null; startDate: string | null; endDate: string | null; status: "DRAFT" | "ACTIVE" | "CLOSED"; questionCount?: number; responseCount?: number; createdByName?: string | null };
+export type SurveyQuestion = { id: number; questionText: string; dimensionCode: string; required: boolean; displayOrder: number };
+export type SurveyAnswer = { questionId: number; score: number; comment?: string | null };
+export const listSurveys = () => request<{ data: SurveySummary[] }>("/surveys", { cache: "no-store" });
+export const listAvailableSurveys = () => request<{ data: Array<SurveySummary & { responseStatus: string }> }>("/surveys/available", { cache: "no-store" });
+export const getSurveyForEmployee = (id: number) => request<{ data: SurveySummary & { questions: SurveyQuestion[] } }>(`/surveys/${id}`, { cache: "no-store" });
+export const createSurvey = (input: { title: string; description?: string | null; startDate: string; endDate: string }) => request<{ data: SurveySummary }>("/surveys", { method: "POST", body: JSON.stringify(input) });
+export const updateSurvey = (id: number, input: Partial<{ title: string; description: string | null; startDate: string; endDate: string }>) => request<{ data: SurveySummary }>(`/surveys/${id}`, { method: "PATCH", body: JSON.stringify(input) });
+export const publishSurvey = (id: number) => request<{ data: SurveySummary }>(`/surveys/${id}/publish`, { method: "POST" });
+export const closeSurvey = (id: number) => request<{ data: SurveySummary }>(`/surveys/${id}/close`, { method: "POST" });
+export const getSurveyResults = (id: number) => request<{ data: { id: number; title: string; status: string; responseCount: number; questions: Array<SurveyQuestion & { answerCount: number; averageScore: number | null; scoreDistribution: Record<number, number> }> } }>(`/surveys/${id}/results`, { cache: "no-store" });
+export const getSurveyParticipants = (id: number) => request<{ data: { responseCount: number; participants: Array<{ responseId: number; submittedAt: string; satisfactionScore: number | null; employee: AiEmployee; answers: Array<{ questionId: number; questionText: string; score: number | null; comment: string | null }> }> } }>(`/surveys/${id}/responses`, { cache: "no-store" });
+export const submitSurveyResponse = (id: number, answers: SurveyAnswer[]) => request<{ data: { responseId: number; surveyId: number; submittedAt: string; satisfactionScore: number } }>(`/surveys/${id}/responses`, { method: "POST", body: JSON.stringify({ answers }) });
+export const getMySurveyResponse = (id: number) => request<{ data: { survey: { id: number; title: string }; response: { id: number; status: string; submittedAt: string | null; satisfactionScore: number | null }; answers: Array<{ questionId: number; questionText: string; dimensionCode: string; score: number | null; comment: string | null }> } }>(`/surveys/${id}/my-response`, { cache: "no-store" });

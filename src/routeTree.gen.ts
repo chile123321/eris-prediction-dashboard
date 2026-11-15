@@ -10,12 +10,50 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as AiAnalysisRouteImport } from './routes/ai-analysis'
+import { Route as EmployeesRouteImport } from './routes/employees'
+import { Route as EngagementRouteImport } from './routes/engagement'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as MySurveysRouteImport } from './routes/my-surveys'
+import { Route as PreviewRouteImport } from './routes/preview'
+import { Route as UsersRouteImport } from './routes/users'
+import { Route as EmployeesIdRouteImport } from './routes/employees.$id'
+import { Route as EmployeesImportRouteImport } from './routes/employees.import'
+import { Route as EmployeesNewRouteImport } from './routes/employees.new'
+import { Route as EngagementIdRouteImport } from './routes/engagement.$id'
+import { Route as MySurveysIdRouteImport } from './routes/my-surveys.$id'
+import { Route as PreviewIndexRouteImport } from './routes/preview.index'
+import { Route as PreviewActivationRouteImport } from './routes/preview.activation'
+import { Route as PreviewAdminRouteImport } from './routes/preview.admin'
+import { Route as PreviewEmployeeRouteImport } from './routes/preview.employee'
+import { Route as PreviewHrRouteImport } from './routes/preview.hr'
+import { Route as PreviewRecoveryRouteImport } from './routes/preview.recovery'
+import { Route as UsersIdRouteImport } from './routes/users.$id'
+import { Route as EmployeesIdEditRouteImport } from './routes/employees.$id_.edit'
+import { Route as PreviewAdminActivityRouteImport } from './routes/preview.admin.activity'
+import { Route as PreviewAdminUsersRouteImport } from './routes/preview.admin.users'
+import { Route as PreviewEmployeeMySurveysRouteImport } from './routes/preview.employee.my-surveys'
+import { Route as PreviewHrAiAnalysisRouteImport } from './routes/preview.hr.ai-analysis'
+import { Route as PreviewHrEmployeesRouteImport } from './routes/preview.hr.employees'
+import { Route as PreviewHrEngagementRouteImport } from './routes/preview.hr.engagement'
+import { Route as PreviewAdminUsersIdRouteImport } from './routes/preview.admin.users.$id'
+import { Route as PreviewEmployeeMySurveysIdRouteImport } from './routes/preview.employee.my-surveys.$id'
+import { Route as PreviewHrEmployeesIdRouteImport } from './routes/preview.hr.employees.$id'
+import { Route as PreviewHrEmployeesImportRouteImport } from './routes/preview.hr.employees.import'
+import { Route as PreviewHrEmployeesNewRouteImport } from './routes/preview.hr.employees.new'
+import { Route as PreviewHrEngagementIdRouteImport } from './routes/preview.hr.engagement.$id'
+import { Route as PreviewHrEmployeesIdEditRouteImport } from './routes/preview.hr.employees.$id_.edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ActivityRoute = ActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AiAnalysisRoute = AiAnalysisRouteImport.update({
@@ -23,40 +61,417 @@ const AiAnalysisRoute = AiAnalysisRouteImport.update({
   path: '/ai-analysis',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EmployeesRoute = EmployeesRouteImport.update({
+  id: '/employees',
+  path: '/employees',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EngagementRoute = EngagementRouteImport.update({
+  id: '/engagement',
+  path: '/engagement',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MySurveysRoute = MySurveysRouteImport.update({
+  id: '/my-surveys',
+  path: '/my-surveys',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PreviewRoute = PreviewRouteImport.update({
+  id: '/preview',
+  path: '/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UsersRoute = UsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmployeesIdRoute = EmployeesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => EmployeesRoute,
+} as any)
+const EmployeesImportRoute = EmployeesImportRouteImport.update({
+  id: '/import',
+  path: '/import',
+  getParentRoute: () => EmployeesRoute,
+} as any)
+const EmployeesNewRoute = EmployeesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => EmployeesRoute,
+} as any)
+const EngagementIdRoute = EngagementIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => EngagementRoute,
+} as any)
+const MySurveysIdRoute = MySurveysIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => MySurveysRoute,
+} as any)
+const PreviewIndexRoute = PreviewIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PreviewRoute,
+} as any)
+const PreviewActivationRoute = PreviewActivationRouteImport.update({
+  id: '/activation',
+  path: '/activation',
+  getParentRoute: () => PreviewRoute,
+} as any)
+const PreviewAdminRoute = PreviewAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => PreviewRoute,
+} as any)
+const PreviewEmployeeRoute = PreviewEmployeeRouteImport.update({
+  id: '/employee',
+  path: '/employee',
+  getParentRoute: () => PreviewRoute,
+} as any)
+const PreviewHrRoute = PreviewHrRouteImport.update({
+  id: '/hr',
+  path: '/hr',
+  getParentRoute: () => PreviewRoute,
+} as any)
+const PreviewRecoveryRoute = PreviewRecoveryRouteImport.update({
+  id: '/recovery',
+  path: '/recovery',
+  getParentRoute: () => PreviewRoute,
+} as any)
+const UsersIdRoute = UsersIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => UsersRoute,
+} as any)
+const EmployeesIdEditRoute = EmployeesIdEditRouteImport.update({
+  id: '/$id_/edit',
+  path: '/$id/edit',
+  getParentRoute: () => EmployeesRoute,
+} as any)
+const PreviewAdminActivityRoute = PreviewAdminActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => PreviewAdminRoute,
+} as any)
+const PreviewAdminUsersRoute = PreviewAdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => PreviewAdminRoute,
+} as any)
+const PreviewEmployeeMySurveysRoute =
+  PreviewEmployeeMySurveysRouteImport.update({
+    id: '/my-surveys',
+    path: '/my-surveys',
+    getParentRoute: () => PreviewEmployeeRoute,
+  } as any)
+const PreviewHrAiAnalysisRoute = PreviewHrAiAnalysisRouteImport.update({
+  id: '/ai-analysis',
+  path: '/ai-analysis',
+  getParentRoute: () => PreviewHrRoute,
+} as any)
+const PreviewHrEmployeesRoute = PreviewHrEmployeesRouteImport.update({
+  id: '/employees',
+  path: '/employees',
+  getParentRoute: () => PreviewHrRoute,
+} as any)
+const PreviewHrEngagementRoute = PreviewHrEngagementRouteImport.update({
+  id: '/engagement',
+  path: '/engagement',
+  getParentRoute: () => PreviewHrRoute,
+} as any)
+const PreviewAdminUsersIdRoute = PreviewAdminUsersIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => PreviewAdminUsersRoute,
+} as any)
+const PreviewEmployeeMySurveysIdRoute =
+  PreviewEmployeeMySurveysIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => PreviewEmployeeMySurveysRoute,
+  } as any)
+const PreviewHrEmployeesIdRoute = PreviewHrEmployeesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => PreviewHrEmployeesRoute,
+} as any)
+const PreviewHrEmployeesImportRoute =
+  PreviewHrEmployeesImportRouteImport.update({
+    id: '/import',
+    path: '/import',
+    getParentRoute: () => PreviewHrEmployeesRoute,
+  } as any)
+const PreviewHrEmployeesNewRoute = PreviewHrEmployeesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => PreviewHrEmployeesRoute,
+} as any)
+const PreviewHrEngagementIdRoute = PreviewHrEngagementIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => PreviewHrEngagementRoute,
+} as any)
+const PreviewHrEmployeesIdEditRoute =
+  PreviewHrEmployeesIdEditRouteImport.update({
+    id: '/$id_/edit',
+    path: '/$id/edit',
+    getParentRoute: () => PreviewHrEmployeesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/activity': typeof ActivityRoute
   '/ai-analysis': typeof AiAnalysisRoute
+  '/employees': typeof EmployeesRouteWithChildren
+  '/engagement': typeof EngagementRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/my-surveys': typeof MySurveysRouteWithChildren
+  '/preview': typeof PreviewRouteWithChildren
+  '/users': typeof UsersRouteWithChildren
+  '/employees/$id': typeof EmployeesIdRoute
+  '/employees/import': typeof EmployeesImportRoute
+  '/employees/new': typeof EmployeesNewRoute
+  '/engagement/$id': typeof EngagementIdRoute
+  '/my-surveys/$id': typeof MySurveysIdRoute
+  '/preview/activation': typeof PreviewActivationRoute
+  '/preview/admin': typeof PreviewAdminRouteWithChildren
+  '/preview/employee': typeof PreviewEmployeeRouteWithChildren
+  '/preview/hr': typeof PreviewHrRouteWithChildren
+  '/preview/recovery': typeof PreviewRecoveryRoute
+  '/users/$id': typeof UsersIdRoute
+  '/preview/': typeof PreviewIndexRoute
+  '/employees/$id/edit': typeof EmployeesIdEditRoute
+  '/preview/admin/activity': typeof PreviewAdminActivityRoute
+  '/preview/admin/users': typeof PreviewAdminUsersRouteWithChildren
+  '/preview/employee/my-surveys': typeof PreviewEmployeeMySurveysRouteWithChildren
+  '/preview/hr/ai-analysis': typeof PreviewHrAiAnalysisRoute
+  '/preview/hr/employees': typeof PreviewHrEmployeesRouteWithChildren
+  '/preview/hr/engagement': typeof PreviewHrEngagementRouteWithChildren
+  '/preview/admin/users/$id': typeof PreviewAdminUsersIdRoute
+  '/preview/employee/my-surveys/$id': typeof PreviewEmployeeMySurveysIdRoute
+  '/preview/hr/employees/$id': typeof PreviewHrEmployeesIdRoute
+  '/preview/hr/employees/import': typeof PreviewHrEmployeesImportRoute
+  '/preview/hr/employees/new': typeof PreviewHrEmployeesNewRoute
+  '/preview/hr/engagement/$id': typeof PreviewHrEngagementIdRoute
+  '/preview/hr/employees/$id/edit': typeof PreviewHrEmployeesIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/activity': typeof ActivityRoute
   '/ai-analysis': typeof AiAnalysisRoute
+  '/employees': typeof EmployeesRouteWithChildren
+  '/engagement': typeof EngagementRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/my-surveys': typeof MySurveysRouteWithChildren
+  '/users': typeof UsersRouteWithChildren
+  '/employees/$id': typeof EmployeesIdRoute
+  '/employees/import': typeof EmployeesImportRoute
+  '/employees/new': typeof EmployeesNewRoute
+  '/engagement/$id': typeof EngagementIdRoute
+  '/my-surveys/$id': typeof MySurveysIdRoute
+  '/preview/activation': typeof PreviewActivationRoute
+  '/preview/admin': typeof PreviewAdminRouteWithChildren
+  '/preview/employee': typeof PreviewEmployeeRouteWithChildren
+  '/preview/hr': typeof PreviewHrRouteWithChildren
+  '/preview/recovery': typeof PreviewRecoveryRoute
+  '/users/$id': typeof UsersIdRoute
+  '/preview': typeof PreviewIndexRoute
+  '/employees/$id/edit': typeof EmployeesIdEditRoute
+  '/preview/admin/activity': typeof PreviewAdminActivityRoute
+  '/preview/admin/users': typeof PreviewAdminUsersRouteWithChildren
+  '/preview/employee/my-surveys': typeof PreviewEmployeeMySurveysRouteWithChildren
+  '/preview/hr/ai-analysis': typeof PreviewHrAiAnalysisRoute
+  '/preview/hr/employees': typeof PreviewHrEmployeesRouteWithChildren
+  '/preview/hr/engagement': typeof PreviewHrEngagementRouteWithChildren
+  '/preview/admin/users/$id': typeof PreviewAdminUsersIdRoute
+  '/preview/employee/my-surveys/$id': typeof PreviewEmployeeMySurveysIdRoute
+  '/preview/hr/employees/$id': typeof PreviewHrEmployeesIdRoute
+  '/preview/hr/employees/import': typeof PreviewHrEmployeesImportRoute
+  '/preview/hr/employees/new': typeof PreviewHrEmployeesNewRoute
+  '/preview/hr/engagement/$id': typeof PreviewHrEngagementIdRoute
+  '/preview/hr/employees/$id/edit': typeof PreviewHrEmployeesIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/activity': typeof ActivityRoute
   '/ai-analysis': typeof AiAnalysisRoute
+  '/employees': typeof EmployeesRouteWithChildren
+  '/engagement': typeof EngagementRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/my-surveys': typeof MySurveysRouteWithChildren
+  '/preview': typeof PreviewRouteWithChildren
+  '/users': typeof UsersRouteWithChildren
+  '/employees/$id': typeof EmployeesIdRoute
+  '/employees/import': typeof EmployeesImportRoute
+  '/employees/new': typeof EmployeesNewRoute
+  '/engagement/$id': typeof EngagementIdRoute
+  '/my-surveys/$id': typeof MySurveysIdRoute
+  '/preview/activation': typeof PreviewActivationRoute
+  '/preview/admin': typeof PreviewAdminRouteWithChildren
+  '/preview/employee': typeof PreviewEmployeeRouteWithChildren
+  '/preview/hr': typeof PreviewHrRouteWithChildren
+  '/preview/recovery': typeof PreviewRecoveryRoute
+  '/users/$id': typeof UsersIdRoute
+  '/preview/': typeof PreviewIndexRoute
+  '/employees/$id_/edit': typeof EmployeesIdEditRoute
+  '/preview/admin/activity': typeof PreviewAdminActivityRoute
+  '/preview/admin/users': typeof PreviewAdminUsersRouteWithChildren
+  '/preview/employee/my-surveys': typeof PreviewEmployeeMySurveysRouteWithChildren
+  '/preview/hr/ai-analysis': typeof PreviewHrAiAnalysisRoute
+  '/preview/hr/employees': typeof PreviewHrEmployeesRouteWithChildren
+  '/preview/hr/engagement': typeof PreviewHrEngagementRouteWithChildren
+  '/preview/admin/users/$id': typeof PreviewAdminUsersIdRoute
+  '/preview/employee/my-surveys/$id': typeof PreviewEmployeeMySurveysIdRoute
+  '/preview/hr/employees/$id': typeof PreviewHrEmployeesIdRoute
+  '/preview/hr/employees/import': typeof PreviewHrEmployeesImportRoute
+  '/preview/hr/employees/new': typeof PreviewHrEmployeesNewRoute
+  '/preview/hr/engagement/$id': typeof PreviewHrEngagementIdRoute
+  '/preview/hr/employees/$id_/edit': typeof PreviewHrEmployeesIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/ai-analysis' | '/login'
+  fullPaths:
+    | '/'
+    | '/activity'
+    | '/ai-analysis'
+    | '/employees'
+    | '/engagement'
+    | '/forgot-password'
+    | '/login'
+    | '/my-surveys'
+    | '/preview'
+    | '/users'
+    | '/employees/$id'
+    | '/employees/import'
+    | '/employees/new'
+    | '/engagement/$id'
+    | '/my-surveys/$id'
+    | '/preview/activation'
+    | '/preview/admin'
+    | '/preview/employee'
+    | '/preview/hr'
+    | '/preview/recovery'
+    | '/users/$id'
+    | '/preview/'
+    | '/employees/$id/edit'
+    | '/preview/admin/activity'
+    | '/preview/admin/users'
+    | '/preview/employee/my-surveys'
+    | '/preview/hr/ai-analysis'
+    | '/preview/hr/employees'
+    | '/preview/hr/engagement'
+    | '/preview/admin/users/$id'
+    | '/preview/employee/my-surveys/$id'
+    | '/preview/hr/employees/$id'
+    | '/preview/hr/employees/import'
+    | '/preview/hr/employees/new'
+    | '/preview/hr/engagement/$id'
+    | '/preview/hr/employees/$id/edit'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/ai-analysis' | '/login'
-  id: '__root__' | '/' | '/ai-analysis' | '/login'
+  to:
+    | '/'
+    | '/activity'
+    | '/ai-analysis'
+    | '/employees'
+    | '/engagement'
+    | '/forgot-password'
+    | '/login'
+    | '/my-surveys'
+    | '/users'
+    | '/employees/$id'
+    | '/employees/import'
+    | '/employees/new'
+    | '/engagement/$id'
+    | '/my-surveys/$id'
+    | '/preview/activation'
+    | '/preview/admin'
+    | '/preview/employee'
+    | '/preview/hr'
+    | '/preview/recovery'
+    | '/users/$id'
+    | '/preview'
+    | '/employees/$id/edit'
+    | '/preview/admin/activity'
+    | '/preview/admin/users'
+    | '/preview/employee/my-surveys'
+    | '/preview/hr/ai-analysis'
+    | '/preview/hr/employees'
+    | '/preview/hr/engagement'
+    | '/preview/admin/users/$id'
+    | '/preview/employee/my-surveys/$id'
+    | '/preview/hr/employees/$id'
+    | '/preview/hr/employees/import'
+    | '/preview/hr/employees/new'
+    | '/preview/hr/engagement/$id'
+    | '/preview/hr/employees/$id/edit'
+  id:
+    | '__root__'
+    | '/'
+    | '/activity'
+    | '/ai-analysis'
+    | '/employees'
+    | '/engagement'
+    | '/forgot-password'
+    | '/login'
+    | '/my-surveys'
+    | '/preview'
+    | '/users'
+    | '/employees/$id'
+    | '/employees/import'
+    | '/employees/new'
+    | '/engagement/$id'
+    | '/my-surveys/$id'
+    | '/preview/activation'
+    | '/preview/admin'
+    | '/preview/employee'
+    | '/preview/hr'
+    | '/preview/recovery'
+    | '/users/$id'
+    | '/preview/'
+    | '/employees/$id_/edit'
+    | '/preview/admin/activity'
+    | '/preview/admin/users'
+    | '/preview/employee/my-surveys'
+    | '/preview/hr/ai-analysis'
+    | '/preview/hr/employees'
+    | '/preview/hr/engagement'
+    | '/preview/admin/users/$id'
+    | '/preview/employee/my-surveys/$id'
+    | '/preview/hr/employees/$id'
+    | '/preview/hr/employees/import'
+    | '/preview/hr/employees/new'
+    | '/preview/hr/engagement/$id'
+    | '/preview/hr/employees/$id_/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ActivityRoute: typeof ActivityRoute
   AiAnalysisRoute: typeof AiAnalysisRoute
+  EmployeesRoute: typeof EmployeesRouteWithChildren
+  EngagementRoute: typeof EngagementRouteWithChildren
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
+  MySurveysRoute: typeof MySurveysRouteWithChildren
+  PreviewRoute: typeof PreviewRouteWithChildren
+  UsersRoute: typeof UsersRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -68,11 +483,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/activity': {
+      id: '/activity'
+      path: '/activity'
+      fullPath: '/activity'
+      preLoaderRoute: typeof ActivityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ai-analysis': {
       id: '/ai-analysis'
       path: '/ai-analysis'
       fullPath: '/ai-analysis'
       preLoaderRoute: typeof AiAnalysisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/employees': {
+      id: '/employees'
+      path: '/employees'
+      fullPath: '/employees'
+      preLoaderRoute: typeof EmployeesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/engagement': {
+      id: '/engagement'
+      path: '/engagement'
+      fullPath: '/engagement'
+      preLoaderRoute: typeof EngagementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -82,13 +525,391 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/my-surveys': {
+      id: '/my-surveys'
+      path: '/my-surveys'
+      fullPath: '/my-surveys'
+      preLoaderRoute: typeof MySurveysRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/preview': {
+      id: '/preview'
+      path: '/preview'
+      fullPath: '/preview'
+      preLoaderRoute: typeof PreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/users': {
+      id: '/users'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof UsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/employees/$id': {
+      id: '/employees/$id'
+      path: '/$id'
+      fullPath: '/employees/$id'
+      preLoaderRoute: typeof EmployeesIdRouteImport
+      parentRoute: typeof EmployeesRoute
+    }
+    '/employees/import': {
+      id: '/employees/import'
+      path: '/import'
+      fullPath: '/employees/import'
+      preLoaderRoute: typeof EmployeesImportRouteImport
+      parentRoute: typeof EmployeesRoute
+    }
+    '/employees/new': {
+      id: '/employees/new'
+      path: '/new'
+      fullPath: '/employees/new'
+      preLoaderRoute: typeof EmployeesNewRouteImport
+      parentRoute: typeof EmployeesRoute
+    }
+    '/engagement/$id': {
+      id: '/engagement/$id'
+      path: '/$id'
+      fullPath: '/engagement/$id'
+      preLoaderRoute: typeof EngagementIdRouteImport
+      parentRoute: typeof EngagementRoute
+    }
+    '/my-surveys/$id': {
+      id: '/my-surveys/$id'
+      path: '/$id'
+      fullPath: '/my-surveys/$id'
+      preLoaderRoute: typeof MySurveysIdRouteImport
+      parentRoute: typeof MySurveysRoute
+    }
+    '/preview/': {
+      id: '/preview/'
+      path: '/'
+      fullPath: '/preview/'
+      preLoaderRoute: typeof PreviewIndexRouteImport
+      parentRoute: typeof PreviewRoute
+    }
+    '/preview/activation': {
+      id: '/preview/activation'
+      path: '/activation'
+      fullPath: '/preview/activation'
+      preLoaderRoute: typeof PreviewActivationRouteImport
+      parentRoute: typeof PreviewRoute
+    }
+    '/preview/admin': {
+      id: '/preview/admin'
+      path: '/admin'
+      fullPath: '/preview/admin'
+      preLoaderRoute: typeof PreviewAdminRouteImport
+      parentRoute: typeof PreviewRoute
+    }
+    '/preview/employee': {
+      id: '/preview/employee'
+      path: '/employee'
+      fullPath: '/preview/employee'
+      preLoaderRoute: typeof PreviewEmployeeRouteImport
+      parentRoute: typeof PreviewRoute
+    }
+    '/preview/hr': {
+      id: '/preview/hr'
+      path: '/hr'
+      fullPath: '/preview/hr'
+      preLoaderRoute: typeof PreviewHrRouteImport
+      parentRoute: typeof PreviewRoute
+    }
+    '/preview/recovery': {
+      id: '/preview/recovery'
+      path: '/recovery'
+      fullPath: '/preview/recovery'
+      preLoaderRoute: typeof PreviewRecoveryRouteImport
+      parentRoute: typeof PreviewRoute
+    }
+    '/users/$id': {
+      id: '/users/$id'
+      path: '/$id'
+      fullPath: '/users/$id'
+      preLoaderRoute: typeof UsersIdRouteImport
+      parentRoute: typeof UsersRoute
+    }
+    '/employees/$id_/edit': {
+      id: '/employees/$id_/edit'
+      path: '/$id/edit'
+      fullPath: '/employees/$id/edit'
+      preLoaderRoute: typeof EmployeesIdEditRouteImport
+      parentRoute: typeof EmployeesRoute
+    }
+    '/preview/admin/activity': {
+      id: '/preview/admin/activity'
+      path: '/activity'
+      fullPath: '/preview/admin/activity'
+      preLoaderRoute: typeof PreviewAdminActivityRouteImport
+      parentRoute: typeof PreviewAdminRoute
+    }
+    '/preview/admin/users': {
+      id: '/preview/admin/users'
+      path: '/users'
+      fullPath: '/preview/admin/users'
+      preLoaderRoute: typeof PreviewAdminUsersRouteImport
+      parentRoute: typeof PreviewAdminRoute
+    }
+    '/preview/employee/my-surveys': {
+      id: '/preview/employee/my-surveys'
+      path: '/my-surveys'
+      fullPath: '/preview/employee/my-surveys'
+      preLoaderRoute: typeof PreviewEmployeeMySurveysRouteImport
+      parentRoute: typeof PreviewEmployeeRoute
+    }
+    '/preview/hr/ai-analysis': {
+      id: '/preview/hr/ai-analysis'
+      path: '/ai-analysis'
+      fullPath: '/preview/hr/ai-analysis'
+      preLoaderRoute: typeof PreviewHrAiAnalysisRouteImport
+      parentRoute: typeof PreviewHrRoute
+    }
+    '/preview/hr/employees': {
+      id: '/preview/hr/employees'
+      path: '/employees'
+      fullPath: '/preview/hr/employees'
+      preLoaderRoute: typeof PreviewHrEmployeesRouteImport
+      parentRoute: typeof PreviewHrRoute
+    }
+    '/preview/hr/engagement': {
+      id: '/preview/hr/engagement'
+      path: '/engagement'
+      fullPath: '/preview/hr/engagement'
+      preLoaderRoute: typeof PreviewHrEngagementRouteImport
+      parentRoute: typeof PreviewHrRoute
+    }
+    '/preview/admin/users/$id': {
+      id: '/preview/admin/users/$id'
+      path: '/$id'
+      fullPath: '/preview/admin/users/$id'
+      preLoaderRoute: typeof PreviewAdminUsersIdRouteImport
+      parentRoute: typeof PreviewAdminUsersRoute
+    }
+    '/preview/employee/my-surveys/$id': {
+      id: '/preview/employee/my-surveys/$id'
+      path: '/$id'
+      fullPath: '/preview/employee/my-surveys/$id'
+      preLoaderRoute: typeof PreviewEmployeeMySurveysIdRouteImport
+      parentRoute: typeof PreviewEmployeeMySurveysRoute
+    }
+    '/preview/hr/employees/$id': {
+      id: '/preview/hr/employees/$id'
+      path: '/$id'
+      fullPath: '/preview/hr/employees/$id'
+      preLoaderRoute: typeof PreviewHrEmployeesIdRouteImport
+      parentRoute: typeof PreviewHrEmployeesRoute
+    }
+    '/preview/hr/employees/import': {
+      id: '/preview/hr/employees/import'
+      path: '/import'
+      fullPath: '/preview/hr/employees/import'
+      preLoaderRoute: typeof PreviewHrEmployeesImportRouteImport
+      parentRoute: typeof PreviewHrEmployeesRoute
+    }
+    '/preview/hr/employees/new': {
+      id: '/preview/hr/employees/new'
+      path: '/new'
+      fullPath: '/preview/hr/employees/new'
+      preLoaderRoute: typeof PreviewHrEmployeesNewRouteImport
+      parentRoute: typeof PreviewHrEmployeesRoute
+    }
+    '/preview/hr/engagement/$id': {
+      id: '/preview/hr/engagement/$id'
+      path: '/$id'
+      fullPath: '/preview/hr/engagement/$id'
+      preLoaderRoute: typeof PreviewHrEngagementIdRouteImport
+      parentRoute: typeof PreviewHrEngagementRoute
+    }
+    '/preview/hr/employees/$id_/edit': {
+      id: '/preview/hr/employees/$id_/edit'
+      path: '/$id/edit'
+      fullPath: '/preview/hr/employees/$id/edit'
+      preLoaderRoute: typeof PreviewHrEmployeesIdEditRouteImport
+      parentRoute: typeof PreviewHrEmployeesRoute
+    }
   }
 }
 
+interface EmployeesRouteChildren {
+  EmployeesIdRoute: typeof EmployeesIdRoute
+  EmployeesImportRoute: typeof EmployeesImportRoute
+  EmployeesNewRoute: typeof EmployeesNewRoute
+  EmployeesIdEditRoute: typeof EmployeesIdEditRoute
+}
+
+const EmployeesRouteChildren: EmployeesRouteChildren = {
+  EmployeesIdRoute: EmployeesIdRoute,
+  EmployeesImportRoute: EmployeesImportRoute,
+  EmployeesNewRoute: EmployeesNewRoute,
+  EmployeesIdEditRoute: EmployeesIdEditRoute,
+}
+
+const EmployeesRouteWithChildren = EmployeesRoute._addFileChildren(
+  EmployeesRouteChildren,
+)
+
+interface EngagementRouteChildren {
+  EngagementIdRoute: typeof EngagementIdRoute
+}
+
+const EngagementRouteChildren: EngagementRouteChildren = {
+  EngagementIdRoute: EngagementIdRoute,
+}
+
+const EngagementRouteWithChildren = EngagementRoute._addFileChildren(
+  EngagementRouteChildren,
+)
+
+interface MySurveysRouteChildren {
+  MySurveysIdRoute: typeof MySurveysIdRoute
+}
+
+const MySurveysRouteChildren: MySurveysRouteChildren = {
+  MySurveysIdRoute: MySurveysIdRoute,
+}
+
+const MySurveysRouteWithChildren = MySurveysRoute._addFileChildren(
+  MySurveysRouteChildren,
+)
+
+interface PreviewAdminUsersRouteChildren {
+  PreviewAdminUsersIdRoute: typeof PreviewAdminUsersIdRoute
+}
+
+const PreviewAdminUsersRouteChildren: PreviewAdminUsersRouteChildren = {
+  PreviewAdminUsersIdRoute: PreviewAdminUsersIdRoute,
+}
+
+const PreviewAdminUsersRouteWithChildren =
+  PreviewAdminUsersRoute._addFileChildren(PreviewAdminUsersRouteChildren)
+
+interface PreviewAdminRouteChildren {
+  PreviewAdminActivityRoute: typeof PreviewAdminActivityRoute
+  PreviewAdminUsersRoute: typeof PreviewAdminUsersRouteWithChildren
+}
+
+const PreviewAdminRouteChildren: PreviewAdminRouteChildren = {
+  PreviewAdminActivityRoute: PreviewAdminActivityRoute,
+  PreviewAdminUsersRoute: PreviewAdminUsersRouteWithChildren,
+}
+
+const PreviewAdminRouteWithChildren = PreviewAdminRoute._addFileChildren(
+  PreviewAdminRouteChildren,
+)
+
+interface PreviewEmployeeMySurveysRouteChildren {
+  PreviewEmployeeMySurveysIdRoute: typeof PreviewEmployeeMySurveysIdRoute
+}
+
+const PreviewEmployeeMySurveysRouteChildren: PreviewEmployeeMySurveysRouteChildren =
+  {
+    PreviewEmployeeMySurveysIdRoute: PreviewEmployeeMySurveysIdRoute,
+  }
+
+const PreviewEmployeeMySurveysRouteWithChildren =
+  PreviewEmployeeMySurveysRoute._addFileChildren(
+    PreviewEmployeeMySurveysRouteChildren,
+  )
+
+interface PreviewEmployeeRouteChildren {
+  PreviewEmployeeMySurveysRoute: typeof PreviewEmployeeMySurveysRouteWithChildren
+}
+
+const PreviewEmployeeRouteChildren: PreviewEmployeeRouteChildren = {
+  PreviewEmployeeMySurveysRoute: PreviewEmployeeMySurveysRouteWithChildren,
+}
+
+const PreviewEmployeeRouteWithChildren = PreviewEmployeeRoute._addFileChildren(
+  PreviewEmployeeRouteChildren,
+)
+
+interface PreviewHrEmployeesRouteChildren {
+  PreviewHrEmployeesIdRoute: typeof PreviewHrEmployeesIdRoute
+  PreviewHrEmployeesImportRoute: typeof PreviewHrEmployeesImportRoute
+  PreviewHrEmployeesNewRoute: typeof PreviewHrEmployeesNewRoute
+  PreviewHrEmployeesIdEditRoute: typeof PreviewHrEmployeesIdEditRoute
+}
+
+const PreviewHrEmployeesRouteChildren: PreviewHrEmployeesRouteChildren = {
+  PreviewHrEmployeesIdRoute: PreviewHrEmployeesIdRoute,
+  PreviewHrEmployeesImportRoute: PreviewHrEmployeesImportRoute,
+  PreviewHrEmployeesNewRoute: PreviewHrEmployeesNewRoute,
+  PreviewHrEmployeesIdEditRoute: PreviewHrEmployeesIdEditRoute,
+}
+
+const PreviewHrEmployeesRouteWithChildren =
+  PreviewHrEmployeesRoute._addFileChildren(PreviewHrEmployeesRouteChildren)
+
+interface PreviewHrEngagementRouteChildren {
+  PreviewHrEngagementIdRoute: typeof PreviewHrEngagementIdRoute
+}
+
+const PreviewHrEngagementRouteChildren: PreviewHrEngagementRouteChildren = {
+  PreviewHrEngagementIdRoute: PreviewHrEngagementIdRoute,
+}
+
+const PreviewHrEngagementRouteWithChildren =
+  PreviewHrEngagementRoute._addFileChildren(PreviewHrEngagementRouteChildren)
+
+interface PreviewHrRouteChildren {
+  PreviewHrAiAnalysisRoute: typeof PreviewHrAiAnalysisRoute
+  PreviewHrEmployeesRoute: typeof PreviewHrEmployeesRouteWithChildren
+  PreviewHrEngagementRoute: typeof PreviewHrEngagementRouteWithChildren
+}
+
+const PreviewHrRouteChildren: PreviewHrRouteChildren = {
+  PreviewHrAiAnalysisRoute: PreviewHrAiAnalysisRoute,
+  PreviewHrEmployeesRoute: PreviewHrEmployeesRouteWithChildren,
+  PreviewHrEngagementRoute: PreviewHrEngagementRouteWithChildren,
+}
+
+const PreviewHrRouteWithChildren = PreviewHrRoute._addFileChildren(
+  PreviewHrRouteChildren,
+)
+
+interface PreviewRouteChildren {
+  PreviewActivationRoute: typeof PreviewActivationRoute
+  PreviewAdminRoute: typeof PreviewAdminRouteWithChildren
+  PreviewEmployeeRoute: typeof PreviewEmployeeRouteWithChildren
+  PreviewHrRoute: typeof PreviewHrRouteWithChildren
+  PreviewRecoveryRoute: typeof PreviewRecoveryRoute
+  PreviewIndexRoute: typeof PreviewIndexRoute
+}
+
+const PreviewRouteChildren: PreviewRouteChildren = {
+  PreviewActivationRoute: PreviewActivationRoute,
+  PreviewAdminRoute: PreviewAdminRouteWithChildren,
+  PreviewEmployeeRoute: PreviewEmployeeRouteWithChildren,
+  PreviewHrRoute: PreviewHrRouteWithChildren,
+  PreviewRecoveryRoute: PreviewRecoveryRoute,
+  PreviewIndexRoute: PreviewIndexRoute,
+}
+
+const PreviewRouteWithChildren =
+  PreviewRoute._addFileChildren(PreviewRouteChildren)
+
+interface UsersRouteChildren {
+  UsersIdRoute: typeof UsersIdRoute
+}
+
+const UsersRouteChildren: UsersRouteChildren = {
+  UsersIdRoute: UsersIdRoute,
+}
+
+const UsersRouteWithChildren = UsersRoute._addFileChildren(UsersRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ActivityRoute: ActivityRoute,
   AiAnalysisRoute: AiAnalysisRoute,
+  EmployeesRoute: EmployeesRouteWithChildren,
+  EngagementRoute: EngagementRouteWithChildren,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
+  MySurveysRoute: MySurveysRouteWithChildren,
+  PreviewRoute: PreviewRouteWithChildren,
+  UsersRoute: UsersRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

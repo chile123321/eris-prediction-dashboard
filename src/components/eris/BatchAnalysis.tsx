@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { getApiErrorMessage, listAiSnapshots, predictAiBatch, type AiBatchRow, type AiEmployee, type AiSnapshot } from "@/lib/eris/api";
+import { getApiErrorMessage, listAiSnapshots, predictAiBatch, type AiBatchRow, type AiEmployee, type AiSnapshot, type AiPolicyRecommendations } from "@/lib/eris/api";
 import { formatDateTime, formatPercent } from "@/lib/eris/analysis";
 import { EmployeeDashboard } from "./EmployeeDashboard";
 import { Empty, Loading, Notice } from "./States";
@@ -7,7 +7,8 @@ import { Empty, Loading, Notice } from "./States";
 const MAX = 25;
 type Pick = { snapshots: AiSnapshot[] | null; error?: string | undefined; snapshotId?: number | undefined };
 
-export function BatchAnalysis({ employees }: { employees: AiEmployee[] }) {
+export function BatchAnalysis({ employees, adapter, illustrative = false, policyLoader }: { employees: AiEmployee[]; adapter?: { listSnapshots: typeof listAiSnapshots; predictBatch: typeof predictAiBatch }; illustrative?: boolean; policyLoader?: (id: number, save: boolean) => Promise<AiPolicyRecommendations> }) {
+  const api = adapter ?? { listSnapshots: listAiSnapshots, predictBatch: predictAiBatch };
   const [picked, setPicked] = useState<Record<number, Pick>>({});
   const [save, setSave] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -27,7 +28,7 @@ export function BatchAnalysis({ employees }: { employees: AiEmployee[] }) {
         return rest;
       }
       if (Object.keys(p).length >= MAX) return p;
-      listAiSnapshots(id)
+      api.listSnapshots(id)
         .then((r) => {
           const ready = r.data.filter((s) => s.ready && s.snapshotId);
           setPicked((q) => (q[id] ? { ...q, [id]: { snapshots: ready, snapshotId: ready[0]?.snapshotId ?? undefined } } : q));
@@ -45,7 +46,7 @@ export function BatchAnalysis({ employees }: { employees: AiEmployee[] }) {
     setBusy(true);
     setError("");
     try {
-      const r = await predictAiBatch(target.map((employeeId) => ({ employeeId, snapshotId: picked[employeeId]!.snapshotId!, save })));
+      const r = await api.predictBatch(target.map((employeeId) => ({ employeeId, snapshotId: picked[employeeId]!.snapshotId!, save })));
       const d = r.data;
       if (only && rows) {
         // Retry: replace only the retried rows; successes are kept as-is.
@@ -153,7 +154,7 @@ export function BatchAnalysis({ employees }: { employees: AiEmployee[] }) {
           </div>
         </div>
       )}
-      {opened?.data && <EmployeeDashboard ref={headingRef} result={opened.data} />}
+      {opened?.data && <EmployeeDashboard ref={headingRef} result={opened.data} illustrative={illustrative} policyLoader={policyLoader} />}
     </div>
   );
 }

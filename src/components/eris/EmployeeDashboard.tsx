@@ -22,7 +22,7 @@ import {
 import { Empty, Notice } from "./States";
 
 /** One dashboard for single, saved and batch-row results. Inputs come only from result.preview (the snapshot used). */
-export const EmployeeDashboard = forwardRef<HTMLHeadingElement, { result: AiPrediction }>(function EmployeeDashboard({ result }, ref) {
+export const EmployeeDashboard = forwardRef<HTMLHeadingElement, { result: AiPrediction; illustrative?: boolean; policyLoader?: ((id: number, save: boolean) => Promise<AiPolicyRecommendations>) | undefined }>(function EmployeeDashboard({ result, illustrative = false, policyLoader }, ref) {
   const { model, preview } = result;
   const demo = isDemoModel(model);
   const base = typeof model.base_value === "number" ? model.base_value : null;
@@ -46,6 +46,7 @@ export const EmployeeDashboard = forwardRef<HTMLHeadingElement, { result: AiPred
           {preview?.employee?.fullName ?? "—"} <span className="text-muted-foreground">· {preview?.employee?.employeeCode}</span>
         </h2>
         <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+          <div><dt className="inline text-muted-foreground">Phòng ban: </dt><dd className="inline">{String(preview?.features?.["Department"] ?? "—")}</dd></div>
           <div><dt className="inline text-muted-foreground">Ngày dữ liệu: </dt><dd className="inline tabular">{formatDateTime(preview?.snapshotDate || preview?.capturedAt)}</dd></div>
           <div><dt className="inline text-muted-foreground">Bản dữ liệu: </dt><dd className="inline tabular">#{result.snapshotId ?? preview?.snapshotId ?? "—"}</dd></div>
           {result.createdAt && <div><dt className="inline text-muted-foreground">Thời điểm dự đoán: </dt><dd className="inline tabular">{formatDateTime(result.createdAt)}</dd></div>}
@@ -58,6 +59,7 @@ export const EmployeeDashboard = forwardRef<HTMLHeadingElement, { result: AiPred
         </dl>
       </div>
 
+      {illustrative && <Notice tone="info" title="Kết quả minh họa">Toàn bộ điểm, đóng góp SHAP và đề xuất dưới đây là dữ liệu mẫu xác định trước, không phải kết quả từ mô hình thật.</Notice>}
       {result.warning && <Notice tone="warning" title="Giới hạn của mô hình">{result.warning}</Notice>}
 
       {/* 2. Summary */}
@@ -108,6 +110,10 @@ export const EmployeeDashboard = forwardRef<HTMLHeadingElement, { result: AiPred
               );
             })}
           </ul>
+          <details className="mt-4 border-t pt-3 text-sm">
+            <summary className="cursor-pointer font-medium">Xem bảng thay thế cho biểu đồ</summary>
+            <div className="mt-3 overflow-x-auto"><table className="w-full min-w-[520px] text-xs"><thead className="text-left text-muted-foreground"><tr className="border-b"><th className="py-2">Yếu tố</th><th>Giá trị</th><th>Đơn vị</th><th className="text-right">Đóng góp (điểm %)</th></tr></thead><tbody>{contributions.map((c) => <tr key={c.key} className="border-b last:border-0"><td className="py-2 pr-2">{featureLabel(c.key)}</td><td className="tabular pr-2">{formatFeatureValue(preview, c.key)}</td><td className="pr-2 text-muted-foreground">{FEATURE_UNITS[c.key] || "—"}</td><td className="tabular text-right">{formatSignedPoints(c.raw)}</td></tr>)}</tbody></table></div>
+          </details>
         </div>
         <div className="panel space-y-4 p-4">
           <FactorList title="Yếu tố làm tăng điểm" items={factors.increase} result={result} />
@@ -151,7 +157,7 @@ export const EmployeeDashboard = forwardRef<HTMLHeadingElement, { result: AiPred
       </details>
 
       {/* 6. Policy */}
-      <PolicyPanel result={result} />
+      <PolicyPanel result={result} policyLoader={policyLoader} illustrative={illustrative} />
     </section>
   );
 });
@@ -186,7 +192,7 @@ function FactorList({ title, items, result }: { title: string; items: ReturnType
   );
 }
 
-function PolicyPanel({ result }: { result: AiPrediction }) {
+function PolicyPanel({ result, policyLoader, illustrative }: { result: AiPrediction; policyLoader?: ((id: number, save: boolean) => Promise<AiPolicyRecommendations>) | undefined; illustrative: boolean }) {
   const [save, setSave] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -198,7 +204,7 @@ function PolicyPanel({ result }: { result: AiPrediction }) {
     setBusy(true);
     setError("");
     try {
-      setData((await generateAiPolicyRecommendations(id, save)).data);
+      setData(policyLoader ? await policyLoader(id, save) : (await generateAiPolicyRecommendations(id, save)).data);
     } catch (e) {
       setError(getApiErrorMessage(e, "Không tải được đề xuất chính sách."));
     } finally {
@@ -208,7 +214,7 @@ function PolicyPanel({ result }: { result: AiPrediction }) {
 
   return (
     <div className="panel p-4">
-      <h3 className="text-base font-semibold">Đề xuất chính sách giữ chân</h3>
+      <h3 className="text-base font-semibold">Đề xuất chính sách giữ chân{illustrative && <span className="ml-2 rounded bg-mint px-2 py-0.5 text-xs font-medium text-primary">Minh họa</span>}</h3>
       {!id ? (
         <p className="mt-2 text-sm text-muted-foreground">Kết quả này chưa lưu. Đề xuất chính sách cần mã kết quả đã lưu; hãy chạy dự đoán với tùy chọn “Lưu kết quả”.</p>
       ) : (

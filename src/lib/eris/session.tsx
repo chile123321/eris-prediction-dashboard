@@ -14,8 +14,8 @@ const SessionContext = createContext<{
   signOut: () => Promise<void>;
 } | null>(null);
 
-export function SessionProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<SessionState>({ status: "loading" });
+export function SessionProvider({ children, enabled = true }: { children: ReactNode; enabled?: boolean }) {
+  const [state, setState] = useState<SessionState>(enabled ? { status: "loading" } : { status: "signedOut" });
   const reload = useCallback(() => {
     setState({ status: "loading" });
     restoreSession()
@@ -25,11 +25,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       );
   }, []);
   useEffect(() => {
+    if (!enabled) {
+      setState({ status: "signedOut" });
+      return;
+    }
     reload();
     const onExpired = () => setState({ status: "signedOut" });
     window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
     return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
-  }, [reload]);
+  }, [enabled, reload]);
   const signOut = useCallback(async () => {
     await apiLogout().catch(() => undefined);
     setState({ status: "signedOut" });

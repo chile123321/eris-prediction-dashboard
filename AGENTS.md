@@ -33,3 +33,4 @@ use the editor.
 - All ERIS calls go through `src/lib/eris/api.ts` (ported ERIS client); pages never call `fetch` directly — keeps token/headers/contract in one place.
 - No Lovable Cloud/backend: the ERIS Express backend owns data, auth and the AI service key; the browser only talks to `VITE_API_BASE_URL`.
 - Prediction display math lives in `src/lib/eris/analysis.ts` with tests — presentation only, never business rules.
+- Preview routes use `PreviewProvider` and local fixtures only; shared views receive data/adapters as props, and live failures never fall back to preview data.

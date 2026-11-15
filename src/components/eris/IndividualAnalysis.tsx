@@ -10,6 +10,7 @@ import {
   type AiEmployee,
   type AiPrediction,
   type AiSnapshot,
+  type AiPolicyRecommendations,
 } from "@/lib/eris/api";
 import { FEATURE_CHOICES, FEATURE_UNITS, featureLabel, formatDateTime, provenanceLabel } from "@/lib/eris/analysis";
 import { EmployeeDashboard } from "./EmployeeDashboard";
@@ -20,9 +21,19 @@ type Props = {
   employees: AiEmployee[];
   initial: Sel;
   onSelectionChange: (s: Sel) => void;
+  adapter?: {
+    listSnapshots: typeof listAiSnapshots;
+    getSnapshot: typeof getAiSnapshot;
+    preview: typeof previewAiEmployee;
+    predict: typeof predictAiEmployee;
+    getResult: typeof getAiResult;
+  };
+  illustrative?: boolean;
+  policyLoader?: (id: number, save: boolean) => Promise<AiPolicyRecommendations>;
 };
 
-export function IndividualAnalysis({ employees, initial, onSelectionChange }: Props) {
+export function IndividualAnalysis({ employees, initial, onSelectionChange, adapter, illustrative = false, policyLoader }: Props) {
+  const api = adapter ?? { listSnapshots: listAiSnapshots, getSnapshot: getAiSnapshot, preview: previewAiEmployee, predict: predictAiEmployee, getResult: getAiResult };
   const [employeeId, setEmployeeId] = useState<number | undefined>(initial.employeeId);
   const [snapshots, setSnapshots] = useState<AiSnapshot[] | null>(null);
   const [snapshotsError, setSnapshotsError] = useState("");
@@ -49,7 +60,7 @@ export function IndividualAnalysis({ employees, initial, onSelectionChange }: Pr
     setSnapshot(null);
     setSupplement({});
     if (!employeeId) return;
-    listAiSnapshots(employeeId)
+    api.listSnapshots(employeeId)
       .then((r) => my === seq.current && setSnapshots(r.data))
       .catch((e) => my === seq.current && setSnapshotsError(getApiErrorMessage(e, "Không tải được danh sách bản dữ liệu.")));
   }, [employeeId]);
@@ -59,7 +70,7 @@ export function IndividualAnalysis({ employees, initial, onSelectionChange }: Pr
     if (!employeeId || !snapshotId) return;
     const my = ++snapSeq.current;
     setSnapshotLoading(true);
-    getAiSnapshot(employeeId, snapshotId)
+    api.getSnapshot(employeeId, snapshotId)
       .then((r) => my === snapSeq.current && setSnapshot(r.data))
       .catch((e) => my === snapSeq.current && setError(getApiErrorMessage(e, "Không tải được bản dữ liệu.")))
       .finally(() => my === snapSeq.current && setSnapshotLoading(false));
@@ -107,7 +118,7 @@ export function IndividualAnalysis({ employees, initial, onSelectionChange }: Pr
     setError("");
     setResult(null);
     try {
-      const r = await previewAiEmployee(employeeId, {
+      const r = await api.preview(employeeId, {
         ...(rate ? { vndPerUsd: Number(rate) } : {}),
         ...(Object.keys(extras).length ? { supplementalFeatures: extras } : {}),
       });
@@ -116,7 +127,7 @@ export function IndividualAnalysis({ employees, initial, onSelectionChange }: Pr
         setSupplement({});
         setSnapshotId(r.data.snapshotId);
         onSelectionChange({ employeeId, snapshotId: r.data.snapshotId });
-        listAiSnapshots(employeeId).then((x) => setSnapshots(x.data)).catch(() => undefined);
+        api.listSnapshots(employeeId).then((x) => setSnapshots(x.data)).catch(() => undefined);
       }
     } catch (e) {
       setError(getApiErrorMessage(e, "Không kiểm tra được dữ liệu."));
@@ -131,7 +142,7 @@ export function IndividualAnalysis({ employees, initial, onSelectionChange }: Pr
     setError("");
     setResult(null);
     try {
-      const r = await predictAiEmployee(employeeId, snapshot.snapshotId, save);
+      const r = await api.predict(employeeId, snapshot.snapshotId, save);
       setResult(r.data);
       if (r.data.saved && r.data.predictionId) onSelectionChange({ employeeId, snapshotId: snapshot.snapshotId, resultId: r.data.predictionId });
     } catch (e) {
@@ -146,7 +157,7 @@ export function IndividualAnalysis({ employees, initial, onSelectionChange }: Pr
     setBusy("result");
     setError("");
     try {
-      const r = await getAiResult(id);
+      const r = await api.getResult(id);
       setResult(r.data);
       onSelectionChange({ resultId: id });
     } catch (e) {
@@ -260,7 +271,7 @@ export function IndividualAnalysis({ employees, initial, onSelectionChange }: Pr
 
       {error && <Notice tone="error">{error}</Notice>}
       {busy === "predict" && <Loading label="Đang gửi yêu cầu dự đoán qua ERIS…" />}
-      {result ? <EmployeeDashboard ref={headingRef} result={result} /> : !busy && !snapshot && <Empty>Chọn nhân viên và bản dữ liệu để chạy dự đoán.</Empty>}
+      {result ? <EmployeeDashboard ref={headingRef} result={result} illustrative={illustrative} policyLoader={policyLoader} /> : !busy && !snapshot && <Empty>Chọn nhân viên và bản dữ liệu để chạy dự đoán.</Empty>}
     </div>
   );
 }
