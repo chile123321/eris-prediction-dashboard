@@ -4,7 +4,7 @@
  * ERIS backend; the backend alone holds AI_SERVICE_KEY and talks to the Mexwell model service.
  * Browser-only: call from event handlers/effects, never during SSR.
  */
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
+const API_BASE_URL = (import.meta.env["VITE_API_BASE_URL"] || "/api").replace(/\/$/, "");
 export const SESSION_EXPIRED_EVENT = "eris:session-expired";
 let lastExpiredAccessToken: string | null = null;
 
@@ -43,7 +43,7 @@ interface LoginResponse {
 }
 
 export class ApiError extends Error {
-  code?: string;
+  code?: string | undefined;
   status: number;
   details?: unknown;
   constructor(message: string, status: number, code?: string, details?: unknown) {
@@ -70,9 +70,9 @@ const AI_DIAGNOSTICS = [
   "AI service trả JSON không hợp lệ.",
 ];
 
-export function getApiErrorMessage(error: unknown, fallback: string) {
+export function getApiErrorMessage(error: unknown, fallback: string): string {
   if (!(error instanceof ApiError)) return fallback;
-  const messages: Record<string, string> = {
+  const messages = {
     LOGIN_FAILED: "Email hoặc mật khẩu không đúng. Vui lòng kiểm tra lại.",
     INACTIVE_USER: "Tài khoản đang bị khóa hoặc chưa sẵn sàng sử dụng. Vui lòng liên hệ quản trị viên.",
     INVALID_SESSION: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
@@ -81,8 +81,9 @@ export function getApiErrorMessage(error: unknown, fallback: string) {
     NETWORK_ERROR: "Không thể kết nối đến máy chủ ERIS. Vui lòng kiểm tra kết nối và thử lại.",
     API_UNAVAILABLE: "Không kết nối được API ERIS tại địa chỉ đã cấu hình.",
     FORBIDDEN: "Bạn không có quyền thực hiện thao tác này.",
-  };
-  if (error.code && messages[error.code]) return messages[error.code];
+  } as const;
+  const known = (messages as Record<string, string>)[error.code || ""];
+  if (known) return known;
   if (AI_DIAGNOSTICS.includes(error.message)) return error.message;
   const technical = error.message.toLowerCase();
   if (error.status === 401 && /invalid email or password/.test(technical)) return messages.LOGIN_FAILED;
@@ -99,7 +100,7 @@ export function getApiErrorMessage(error: unknown, fallback: string) {
     503: "Dịch vụ hiện tạm thời không khả dụng. Vui lòng thử lại sau.",
     504: "Yêu cầu mất quá nhiều thời gian để xử lý. Vui lòng thử lại.",
   };
-  return byStatus[error.status] || fallback;
+  return byStatus[error.status] ?? fallback;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -160,7 +161,7 @@ export function changePassword(passwordChangeToken: string, currentPassword: str
 }
 
 export function getCurrentUser(signal?: AbortSignal) {
-  return request<ApiUser>("/auth/me", { signal, cache: "no-store" });
+  return request<ApiUser>("/auth/me", { ...(signal ? { signal } : {}), cache: "no-store" });
 }
 
 export async function refreshSession() {

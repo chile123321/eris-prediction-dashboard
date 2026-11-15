@@ -130,7 +130,7 @@ export const EmployeeDashboard = forwardRef<HTMLHeadingElement, { result: AiPred
                   <td className="tabular pr-3">{formatFeatureValue(preview, key)}</td>
                   <td className="pr-3 text-muted-foreground">{FEATURE_UNITS[key] || "—"}</td>
                   <td className="pr-3 text-xs">{provenanceLabel(preview?.provenance?.[key])}</td>
-                  <td className="tabular pr-3">{key in (model.contributions || {}) ? formatSignedPoints(model.contributions[key]) : "—"}</td>
+                  <td className="tabular pr-3">{key in (model.contributions || {}) ? formatSignedPoints(model.contributions[key] ?? 0) : "—"}</td>
                   <td className="text-xs text-warning">{issuesFor(key).join(", ") || ""}</td>
                 </tr>
               ))}

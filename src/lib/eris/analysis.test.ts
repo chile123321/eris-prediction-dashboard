@@ -14,7 +14,7 @@ describe("prediction display rules", () => {
   it("sorts by absolute contribution and keeps zero contributions", () => {
     const rows = sortedContributions({ A: 0.01, B: -0.03, C: 0 });
     expect(rows.map((r) => r.key)).toEqual(["B", "A", "C"]);
-    expect(rows[2].direction).toBe("neutral");
+    expect(rows[2]?.direction).toBe("neutral");
   });
   it("returns at most three factors per direction", () => {
     const f = topFactors({ a: 0.1, b: 0.2, c: 0.3, d: 0.4, e: -0.1 });

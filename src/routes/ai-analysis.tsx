@@ -7,7 +7,7 @@ import { ApiUnavailable, Forbidden, Loading, Notice } from "@/components/eris/St
 import { ApiError, getAiModel, getApiErrorMessage, isApiUnavailable, listAiEmployees, userRole, type AiEmployee, type AiModelInfo } from "@/lib/eris/api";
 import { useSession } from "@/lib/eris/session";
 
-type Search = { tab?: "batch"; employeeId?: number; snapshotId?: number; resultId?: number };
+type Search = { tab?: "batch" | undefined; employeeId?: number | undefined; snapshotId?: number | undefined; resultId?: number | undefined };
 const posInt = (v: unknown) => {
   const n = Number(v);
   return Number.isSafeInteger(n) && n > 0 ? n : undefined;
@@ -15,10 +15,10 @@ const posInt = (v: unknown) => {
 
 export const Route = createFileRoute("/ai-analysis")({
   validateSearch: (s: Record<string, unknown>): Search => ({
-    tab: s.tab === "batch" ? "batch" : undefined,
-    employeeId: posInt(s.employeeId),
-    snapshotId: posInt(s.snapshotId),
-    resultId: posInt(s.resultId),
+    tab: s["tab"] === "batch" ? "batch" : undefined,
+    employeeId: posInt(s["employeeId"]),
+    snapshotId: posInt(s["snapshotId"]),
+    resultId: posInt(s["resultId"]),
   }),
   head: () => ({
     meta: [

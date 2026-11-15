@@ -5,7 +5,7 @@ import { EmployeeDashboard } from "./EmployeeDashboard";
 import { Empty, Loading, Notice } from "./States";
 
 const MAX = 25;
-type Pick = { snapshots: AiSnapshot[] | null; error?: string; snapshotId?: number };
+type Pick = { snapshots: AiSnapshot[] | null; error?: string | undefined; snapshotId?: number | undefined };
 
 export function BatchAnalysis({ employees }: { employees: AiEmployee[] }) {
   const [picked, setPicked] = useState<Record<number, Pick>>({});
@@ -37,7 +37,7 @@ export function BatchAnalysis({ employees }: { employees: AiEmployee[] }) {
     });
   }
 
-  const runnable = ids.filter((id) => picked[id].snapshotId);
+  const runnable = ids.filter((id) => picked[id]?.snapshotId);
 
   async function run(only?: number[]) {
     const target = (only ?? runnable).filter((id) => picked[id]?.snapshotId);
@@ -45,7 +45,7 @@ export function BatchAnalysis({ employees }: { employees: AiEmployee[] }) {
     setBusy(true);
     setError("");
     try {
-      const r = await predictAiBatch(target.map((employeeId) => ({ employeeId, snapshotId: picked[employeeId].snapshotId!, save })));
+      const r = await predictAiBatch(target.map((employeeId) => ({ employeeId, snapshotId: picked[employeeId]!.snapshotId!, save })));
       const d = r.data;
       if (only && rows) {
         // Retry: replace only the retried rows; successes are kept as-is.
@@ -96,13 +96,13 @@ export function BatchAnalysis({ employees }: { employees: AiEmployee[] }) {
                 <thead className="text-left text-xs text-muted-foreground"><tr className="border-b"><th className="py-2 font-medium">Nhân viên</th><th className="font-medium">Bản dữ liệu sẵn sàng</th></tr></thead>
                 <tbody>
                   {ids.map((id) => {
-                    const p = picked[id];
+                    const p = picked[id]!;
                     return (
                       <tr key={id} className="border-b last:border-0">
                         <td className="py-2 pr-2">{byId.get(id)?.fullName}</td>
                         <td>
                           {p.snapshots === null ? <span className="text-muted-foreground">Đang tải…</span> : p.error ? <span className="text-destructive">{p.error}</span> : p.snapshots.length === 0 ? <span className="text-warning">Không có bản dữ liệu sẵn sàng</span> : (
-                            <select className="field h-9" aria-label={`Bản dữ liệu cho ${byId.get(id)?.fullName}`} value={p.snapshotId ?? ""} onChange={(e) => setPicked((q) => ({ ...q, [id]: { ...q[id], snapshotId: Number(e.target.value) } }))}>
+                            <select className="field h-9" aria-label={`Bản dữ liệu cho ${byId.get(id)?.fullName}`} value={p.snapshotId ?? ""} onChange={(e) => setPicked((q) => ({ ...q, [id]: { ...q[id]!, snapshotId: Number(e.target.value) } }))}>
                               {p.snapshots.map((s) => <option key={s.snapshotId!} value={s.snapshotId!}>#{s.snapshotId} · {formatDateTime(s.snapshotDate || s.capturedAt)}</option>)}
                             </select>
                           )}

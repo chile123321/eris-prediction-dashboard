@@ -15,10 +15,11 @@ import { FEATURE_CHOICES, FEATURE_UNITS, featureLabel, formatDateTime, provenanc
 import { EmployeeDashboard } from "./EmployeeDashboard";
 import { Empty, Loading, Notice } from "./States";
 
+type Sel = { employeeId?: number | undefined; snapshotId?: number | undefined; resultId?: number | undefined };
 type Props = {
   employees: AiEmployee[];
-  initial: { employeeId?: number; snapshotId?: number; resultId?: number };
-  onSelectionChange: (s: { employeeId?: number; snapshotId?: number; resultId?: number }) => void;
+  initial: Sel;
+  onSelectionChange: (s: Sel) => void;
 };
 
 export function IndividualAnalysis({ employees, initial, onSelectionChange }: Props) {
@@ -36,6 +37,7 @@ export function IndividualAnalysis({ employees, initial, onSelectionChange }: Pr
   const [result, setResult] = useState<AiPrediction | null>(null);
   const [resultInput, setResultInput] = useState(initial.resultId ? String(initial.resultId) : "");
   const seq = useRef(0);
+  const snapSeq = useRef(0);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const openedInitialResult = useRef(false);
 
@@ -55,12 +57,12 @@ export function IndividualAnalysis({ employees, initial, onSelectionChange }: Pr
   // Load the selected stored snapshot (read-only GET).
   useEffect(() => {
     if (!employeeId || !snapshotId) return;
-    const my = ++seq.current;
+    const my = ++snapSeq.current;
     setSnapshotLoading(true);
     getAiSnapshot(employeeId, snapshotId)
-      .then((r) => my === seq.current && setSnapshot(r.data))
-      .catch((e) => my === seq.current && setError(getApiErrorMessage(e, "Không tải được bản dữ liệu.")))
-      .finally(() => my === seq.current && setSnapshotLoading(false));
+      .then((r) => my === snapSeq.current && setSnapshot(r.data))
+      .catch((e) => my === snapSeq.current && setError(getApiErrorMessage(e, "Không tải được bản dữ liệu.")))
+      .finally(() => my === snapSeq.current && setSnapshotLoading(false));
   }, [employeeId, snapshotId]);
 
   // A resultId in the URL opens a saved result via GET only — never a new prediction.
