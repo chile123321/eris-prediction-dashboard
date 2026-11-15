@@ -28,3 +28,8 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## ERIS frontend rules
+- All ERIS calls go through `src/lib/eris/api.ts` (ported ERIS client); pages never call `fetch` directly — keeps token/headers/contract in one place.
+- No Lovable Cloud/backend: the ERIS Express backend owns data, auth and the AI service key; the browser only talks to `VITE_API_BASE_URL`.
+- Prediction display math lives in `src/lib/eris/analysis.ts` with tests — presentation only, never business rules.

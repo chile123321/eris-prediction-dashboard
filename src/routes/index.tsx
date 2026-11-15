@@ -1,23 +1,27 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { ApiUnavailable, Loading } from "@/components/eris/States";
+import { useSession } from "@/lib/eris/session";
 
-// The home route ships no og:image, so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "ERIS · Employee Retention Intelligence System" },
+      { name: "description", content: "Dự đoán nguy cơ nghỉ việc bằng AI và hỗ trợ quyết định nhân sự." },
+      { property: "og:title", content: "ERIS · Employee Retention Intelligence System" },
+      { property: "og:description", content: "Dự đoán nguy cơ nghỉ việc bằng AI và hỗ trợ quyết định nhân sự." },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
+/** Redirects according to the real ERIS session. */
 function Index() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
+  const { state, reload } = useSession();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (state.status === "signedIn") void navigate({ to: "/ai-analysis", replace: true });
+    if (state.status === "signedOut") void navigate({ to: "/login", replace: true });
+  }, [state.status, navigate]);
+  return <div className="p-6">{state.status === "unavailable" ? <ApiUnavailable onRetry={reload} /> : <Loading label="Đang kiểm tra phiên đăng nhập…" />}</div>;
 }
