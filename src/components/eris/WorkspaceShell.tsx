@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Activity, BrainCircuit, ClipboardList, FileText, LogOut, Menu, RotateCcw, ShieldCheck, Users, X } from "lucide-react";
+import { Activity, BrainCircuit, ClipboardList, LogOut, Menu, RotateCcw, ShieldCheck, Users, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { ErisLogo } from "./Logo";
 import { usePreview } from "@/lib/eris/preview";
@@ -10,20 +10,30 @@ type Props = { role: Role; breadcrumb: string[]; children: ReactNode; preview?: 
 export function WorkspaceShell({ role, breadcrumb, children, preview = false, userLabel, onSignOut }: Props) {
   const [open, setOpen] = useState(false);
   const previewApi = preview ? usePreview() : null;
-  const prefix = preview ? `/preview/${role.toLowerCase()}` : "";
-  const navItems = role === "ADMIN" ? [
-    { to: `${prefix}/users`, label: "Quản lý tài khoản", icon: Users },
-    { to: `${prefix}/activity`, label: "Nhật ký hoạt động", icon: Activity },
-  ] : role === "HR" ? [
-    { to: `${prefix}/employees`, label: "Nhân viên", icon: Users },
-    { to: `${prefix}/ai-analysis`, label: "Phân tích AI", icon: BrainCircuit },
-    { to: `${prefix}/engagement`, label: "Khảo sát", icon: ClipboardList },
-  ] : [{ to: `${prefix}/my-surveys`, label: "Khảo sát của tôi", icon: ClipboardList }];
+  const navItems = role === "ADMIN" ? (preview ? ([
+    { to: "/preview/admin/users", label: "Quản lý tài khoản", icon: Users },
+    { to: "/preview/admin/activity", label: "Nhật ký hoạt động", icon: Activity },
+  ] as const) : ([
+    { to: "/users", label: "Quản lý tài khoản", icon: Users },
+    { to: "/activity", label: "Nhật ký hoạt động", icon: Activity },
+  ] as const)) : role === "HR" ? (preview ? ([
+    { to: "/preview/hr/employees", label: "Nhân viên", icon: Users },
+    { to: "/preview/hr/ai-analysis", label: "Phân tích AI", icon: BrainCircuit },
+    { to: "/preview/hr/engagement", label: "Khảo sát", icon: ClipboardList },
+  ] as const) : ([
+    { to: "/employees", label: "Nhân viên", icon: Users },
+    { to: "/ai-analysis", label: "Phân tích AI", icon: BrainCircuit },
+    { to: "/engagement", label: "Khảo sát", icon: ClipboardList },
+  ] as const)) : (preview ? ([
+    { to: "/preview/employee/my-surveys", label: "Khảo sát của tôi", icon: ClipboardList },
+  ] as const) : ([
+    { to: "/my-surveys", label: "Khảo sát của tôi", icon: ClipboardList },
+  ] as const));
   const roleLabel = role === "ADMIN" ? "Quản trị viên" : role === "HR" ? "Nhân sự" : "Nhân viên";
   const nav = (
     <nav aria-label={`Điều hướng ${roleLabel}`} className="flex flex-col gap-1 p-3">
       {navItems.map((item) => (
-        <Link key={item.to} to={item.to as "/users"} onClick={() => setOpen(false)} className="flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent" activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }} activeOptions={{ exact: false }}>
+        <Link key={item.to} to={item.to} onClick={() => setOpen(false)} className="flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent" activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }} activeOptions={{ exact: false }}>
           <item.icon className="h-[18px] w-[18px] text-primary" aria-hidden />{item.label}
         </Link>
       ))}

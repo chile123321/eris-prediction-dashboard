@@ -5,6 +5,6 @@ import { Loading } from "@/components/eris/States";
 import { getEmployeeProfile } from "@/lib/eris/api";
 import { pageHead } from "@/lib/eris/head";
 import { useApiData } from "@/lib/eris/use-api-data";
-export const Route = createFileRoute("/employees/$id")({ head: () => pageHead("Chi tiết nhân viên · ERIS", "Hồ sơ nhân viên, công việc và học vấn trên ERIS."), component: Page });
+export const Route = createFileRoute("/employees_/$id")({ head: () => pageHead("Chi tiết nhân viên · ERIS", "Hồ sơ nhân viên, công việc và học vấn trên ERIS."), component: Page });
 function Page() { return <LiveGuard role="HR" breadcrumb={["HR", "Nhân viên", "Chi tiết"]}><Content /></LiveGuard>; }
 function Content() { const { id } = Route.useParams(); const employeeId = Number(id); const { data, error, loading, reload } = useApiData(() => getEmployeeProfile(employeeId), [employeeId]); if (loading) return <Loading />; if (error) return <LiveError error={new Error(error)} onRetry={reload} />; return data ? <EmployeeDetailView employee={profileToEmployee(data)} /> : null; }
