@@ -12,33 +12,41 @@ import { loadEnv } from "vite";
 
 const localEnv = loadEnv("development", process.cwd(), "");
 const configuredPort = Number.parseInt(localEnv["ERIS_DEV_PORT"] || "", 10);
-const devPort =
-  Number.isInteger(configuredPort) && configuredPort > 0 && configuredPort <= 65_535
-    ? configuredPort
-    : 8081;
+const hasValidDevPort =
+  Number.isInteger(configuredPort) && configuredPort > 0 && configuredPort <= 65_535;
 
-function getApiProxyTarget(value: string | undefined) {
-  const fallback = "http://127.0.0.1:3000";
-  if (!value) return fallback;
+function getApiProxyTarget(value: string | undefined): string | undefined {
+  if (!value) return undefined;
   try {
     const target = new URL(value);
-    return target.protocol === "http:" || target.protocol === "https:" ? target.origin : fallback;
+    return target.protocol === "http:" || target.protocol === "https:" ? target.origin : undefined;
   } catch {
-    return fallback;
+    return undefined;
   }
 }
 
 const apiProxyTarget = getApiProxyTarget(localEnv["ERIS_API_PROXY_TARGET"]);
+const isProductionBuild = process.env["NODE_ENV"] === "production";
+
+if (!isProductionBuild && (!hasValidDevPort || !apiProxyTarget)) {
+  throw new Error(
+    "Missing or invalid ERIS_DEV_PORT / ERIS_API_PROXY_TARGET in the ignored local .env file.",
+  );
+}
 
 export default defineConfig({
   vite: {
     server: {
-      port: devPort,
+      ...(hasValidDevPort ? { port: configuredPort } : {}),
       strictPort: true,
-      proxy: {
-        // Express mounts /api itself; retain the prefix and refresh-cookie path.
-        "/api": { target: apiProxyTarget, changeOrigin: true },
-      },
+      ...(apiProxyTarget
+        ? {
+            proxy: {
+              // Express mounts /api itself; retain the prefix and refresh-cookie path.
+              "/api": { target: apiProxyTarget, changeOrigin: true },
+            },
+          }
+        : {}),
     },
   },
   tanstackStart: {
