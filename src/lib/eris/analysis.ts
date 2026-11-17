@@ -189,3 +189,21 @@ export function formatDateTime(value?: string | null) {
     ? value
     : d.toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
 }
+
+/** Normalize an API date/timestamp for an HTML date input without displaying time. */
+export function toDateInputValue(value?: string | null) {
+  if (!value) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit",
+  }).formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value || "";
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
+
+export function formatDate(value?: string | null) {
+  const normalized = toDateInputValue(value);
+  return normalized ? normalized.split("-").reverse().join("/") : "—";
+}

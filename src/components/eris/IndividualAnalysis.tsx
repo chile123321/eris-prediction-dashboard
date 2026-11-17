@@ -79,7 +79,6 @@ export function IndividualAnalysis({
   const [snapshotId, setSnapshotId] = useState<number | undefined>(initial.snapshotId);
   const [snapshot, setSnapshot] = useState<AiSnapshot | null>(null);
   const [snapshotLoading, setSnapshotLoading] = useState(false);
-  const [rate, setRate] = useState("");
   const [supplement, setSupplement] = useState<Record<string, string>>({});
   const [save, setSave] = useState(true);
   const [busy, setBusy] = useState<Busy>("");
@@ -165,11 +164,8 @@ export function IndividualAnalysis({
     for (const [key, value] of Object.entries(supplement))
       if (value.trim())
         extras[key] = FEATURE_CHOICES[key] || key === "Hire_Date" ? value : Number(value);
-    if (
-      Object.values(extras).some((value) => typeof value === "number" && !Number.isFinite(value)) ||
-      (rate && (!Number.isFinite(Number(rate)) || Number(rate) < 1 || Number(rate) > 1_000_000))
-    ) {
-      setDataError("Vui lòng kiểm tra các giá trị số và tỷ giá (1–1.000.000 VND/USD).");
+    if (Object.values(extras).some((value) => typeof value === "number" && !Number.isFinite(value))) {
+      setDataError("Vui lòng kiểm tra các giá trị số.");
       return;
     }
     setBusy("preview");
@@ -178,7 +174,6 @@ export function IndividualAnalysis({
     setResultError("");
     try {
       const response = await apiRef.current.preview(employeeId, {
-        ...(rate ? { vndPerUsd: Number(rate) } : {}),
         ...(Object.keys(extras).length ? { supplementalFeatures: extras } : {}),
       });
       setSnapshot(response.data);
@@ -356,20 +351,6 @@ export function IndividualAnalysis({
               Tùy chọn kiểm tra và bổ sung dữ liệu
             </summary>
             <div className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              <label className="text-xs font-medium">
-                Tỷ giá VND cho 1 USD
-                <input
-                  className="field tabular mt-1.5"
-                  type="number"
-                  min={1}
-                  max={1000000}
-                  value={rate}
-                  onChange={(event) => setRate(event.target.value)}
-                />
-                <span className="mt-1 block font-normal text-muted-foreground">
-                  Chỉ dùng để quy đổi lương khi tạo bản dữ liệu.
-                </span>
-              </label>
               {snapshot?.missingFeatures.map((key) => (
                 <label key={key} className="text-xs font-medium">
                   {featureLabel(key)}

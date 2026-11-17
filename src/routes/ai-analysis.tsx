@@ -100,6 +100,13 @@ function Workspace() {
   }, []);
   useEffect(load, [load]);
 
+  const selectedEmployeeId = search.employeeId && employees?.some((employee) => employee.id === search.employeeId)
+    ? search.employeeId
+    : undefined;
+  useEffect(() => {
+    if (employees && search.employeeId && !selectedEmployeeId) void navigate({ search: {}, replace: true });
+  }, [employees, navigate, search.employeeId, selectedEmployeeId]);
+
   const tab = search.tab === "batch" ? "batch" : "individual";
   const setTab = (t: "individual" | "batch") =>
     void navigate({ search: t === "batch" ? { tab: "batch" } : {}, replace: true });
@@ -169,8 +176,8 @@ function Workspace() {
         <IndividualAnalysis
           employees={employees}
           initial={{
-            employeeId: search.employeeId,
-            snapshotId: search.snapshotId,
+          employeeId: selectedEmployeeId,
+          snapshotId: selectedEmployeeId ? search.snapshotId : undefined,
             resultId: search.resultId,
           }}
           onSelectionChange={(s) => void navigate({ search: s, replace: true })}

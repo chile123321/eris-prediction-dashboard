@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { getApiErrorMessage } from "@/lib/eris/api";
 import { AlertCircle, ArrowLeft, ArrowRight, Inbox, Loader2, RotateCcw, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -26,9 +27,14 @@ const statusStyles: Record<string, string> = {
   CLOSED: "bg-muted text-muted-foreground border-border",
   FAILED: "bg-error-surface text-destructive border-destructive/15",
   SENT: "bg-mint text-primary border-primary/15",
+  NO_ACCOUNT: "bg-muted text-muted-foreground border-border",
+  UNKNOWN: "bg-muted text-muted-foreground border-border",
 };
+export function accountStatusLabel(status: string) {
+  return ({ ACTIVE: "Đã kích hoạt", IN_PROCESS: "Chờ kích hoạt", INACTIVE: "Đã khóa", NO_ACCOUNT: "Chưa có tài khoản", UNKNOWN: "Chưa xác định" } as Record<string, string>)[status] || "Chưa xác định";
+}
 const statusLabels: Record<string, string> = {
-  ACTIVE: "Đang hoạt động", INACTIVE: "Đã khóa", IN_PROCESS: "Chờ kích hoạt", DRAFT: "Bản nháp",
+  ACTIVE: "Đã kích hoạt", INACTIVE: "Đã khóa", IN_PROCESS: "Chờ kích hoạt", NO_ACCOUNT: "Chưa có tài khoản", UNKNOWN: "Chưa xác định", DRAFT: "Bản nháp",
   CLOSED: "Đã đóng", SUBMITTED: "Đã gửi", NOT_STARTED: "Chưa trả lời", CREATED: "Thành công", FAILED: "Thất bại", SENT: "Đã gửi",
 };
 export function StatusBadge({ status, label }: { status: string; label?: string | undefined }) {
@@ -61,8 +67,11 @@ export function ErrorState({ onRetry }: { onRetry?: () => void }) {
   return <div role="alert" className="panel flex min-h-56 flex-col items-center justify-center p-8 text-center"><AlertCircle className="h-7 w-7 text-destructive" /><h2 className="mt-3 font-semibold">Không thể tải dữ liệu minh họa</h2><p className="mt-1 text-sm text-muted-foreground">Trạng thái lỗi để đánh giá giao diện; không có yêu cầu mạng nào được gửi.</p>{onRetry && <button type="button" className="btn btn-secondary mt-4" onClick={onRetry}><RotateCcw className="h-4 w-4" />Thử lại</button>}</div>;
 }
 
-export function ConfirmDialog({ open, onOpenChange, title, description, confirmLabel = "Xác nhận", destructive = false, onConfirm }: { open: boolean; onOpenChange: (open: boolean) => void; title: string; description: string; confirmLabel?: string; destructive?: boolean; onConfirm: () => void }) {
-  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>{title}</DialogTitle><DialogDescription className="leading-6">{description}</DialogDescription></DialogHeader><DialogFooter><button type="button" className="btn btn-secondary" onClick={() => onOpenChange(false)}>Hủy</button><button type="button" className={`btn ${destructive ? "bg-destructive text-destructive-foreground" : "btn-primary"}`} onClick={() => { onConfirm(); onOpenChange(false); }}>{confirmLabel}</button></DialogFooter><span className="sr-only"><X /></span></DialogContent></Dialog>;
+export function ConfirmDialog({ open, onOpenChange, title, description, confirmLabel = "Xác nhận", destructive = false, onConfirm }: { open: boolean; onOpenChange: (open: boolean) => void; title: string; description: string; confirmLabel?: string; destructive?: boolean; onConfirm: () => void | Promise<void> }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function confirm() { setBusy(true); setError(""); try { await onConfirm(); onOpenChange(false); } catch (reason) { setError(getApiErrorMessage(reason, "Không lưu được thay đổi. Vui lòng thử lại.")); } finally { setBusy(false); } }
+  return <Dialog open={open} onOpenChange={(value) => { if (!busy) { setError(""); onOpenChange(value); } }}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>{title}</DialogTitle><DialogDescription className="leading-6">{description}</DialogDescription></DialogHeader>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}<DialogFooter><button type="button" disabled={busy} className="btn btn-secondary" onClick={() => { setError(""); onOpenChange(false); }}>Hủy</button><button type="button" disabled={busy} className={`btn ${destructive ? "bg-destructive text-destructive-foreground" : "btn-primary"}`} onClick={() => void confirm()}>{busy ? "Đang lưu…" : confirmLabel}</button></DialogFooter><span className="sr-only"><X /></span></DialogContent></Dialog>;
 }
 
 export function Definition({ label, children }: { label: string; children: ReactNode }) {

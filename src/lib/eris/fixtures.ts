@@ -2,9 +2,9 @@ import type { AiEmployee, AiPrediction, AiPolicyRecommendations, AiSnapshot } fr
 
 export type PreviewRole = "admin" | "hr" | "employee";
 export type PreviewViewState = "populated" | "loading" | "empty" | "error";
-export type Account = { id: number; fullName: string; email: string; role: "ADMIN" | "HR" | "EMPLOYEE"; status: "ACTIVE" | "IN_PROCESS" | "INACTIVE"; hireDate: string; invitation: "SENT" | "FAILED" | null };
+export type Account = { id: number; fullName: string; email: string; role: "ADMIN" | "HR" | "EMPLOYEE"; status: "ACTIVE" | "IN_PROCESS" | "INACTIVE" | "UNKNOWN"; hireDate: string; invitation: "SENT" | "FAILED" | null };
 export type Education = { level: string; institution: string; field: string; graduationYear: number };
-export type Employee = { id: number; employeeCode: string; fullName: string; email: string; phone: string; dateOfBirth: string; gender: string; departmentId: number; department: string; hireDate: string; employmentType: string; employmentStatus: "ACTIVE" | "INACTIVE"; currentSalary: number; education: Education; accountStatus: "ACTIVE" | "IN_PROCESS" | "INACTIVE" };
+export type Employee = { id: number; employeeCode: string; fullName: string; email: string; phone: string; dateOfBirth: string; gender: string; departmentId: number; department: string; positionId?: number; position?: string; hireDate: string; employmentType: string; employmentStatus: "ACTIVE" | "INACTIVE"; currentSalary: number; education: Education; accountStatus: "ACTIVE" | "IN_PROCESS" | "INACTIVE" | "NO_ACCOUNT" | "UNKNOWN" };
 export type SurveyQuestion = { id: number; text: string; dimension: string };
 export type SurveyAnswer = { score: number; comment: string };
 export type SurveyResponse = { id: number; employeeId: number; submittedAt: string; answers: Record<number, SurveyAnswer> };
