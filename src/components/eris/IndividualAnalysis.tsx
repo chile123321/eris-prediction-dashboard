@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { AlertTriangle, CheckCircle2, Play } from "lucide-react";
 import {
   getAiResult,
   getAiSnapshot,
@@ -10,13 +11,25 @@ import {
   type AiEmployee,
   type AiPrediction,
   type AiSnapshot,
-  type AiPolicyRecommendations,
 } from "@/lib/eris/api";
-import { FEATURE_CHOICES, FEATURE_UNITS, featureLabel, formatDateTime, provenanceLabel } from "@/lib/eris/analysis";
-import { EmployeeDashboard } from "./EmployeeDashboard";
+import {
+  FEATURE_CHOICES,
+  FEATURE_UNITS,
+  featureLabel,
+  formatDateTime,
+  provenanceLabel,
+} from "@/lib/eris/analysis";
+import {
+  EmployeePredictionDashboard,
+  type PredictionDashboardState,
+} from "./EmployeePredictionDashboard";
 import { Empty, Loading, Notice } from "./States";
 
-type Sel = { employeeId?: number | undefined; snapshotId?: number | undefined; resultId?: number | undefined };
+type Sel = {
+  employeeId?: number | undefined;
+  snapshotId?: number | undefined;
+  resultId?: number | undefined;
+};
 type Props = {
   employees: AiEmployee[];
   initial: Sel;
@@ -29,249 +42,573 @@ type Props = {
     getResult: typeof getAiResult;
   };
   illustrative?: boolean;
-  policyLoader?: (id: number, save: boolean) => Promise<AiPolicyRecommendations>;
 };
+type Busy = "" | "preview" | "predict" | "save" | "result";
+type FailedAction = { type: "predict" } | { type: "result"; id: number } | null;
 
-export function IndividualAnalysis({ employees, initial, onSelectionChange, adapter, illustrative = false, policyLoader }: Props) {
-  const api = adapter ?? { listSnapshots: listAiSnapshots, getSnapshot: getAiSnapshot, preview: previewAiEmployee, predict: predictAiEmployee, getResult: getAiResult };
+const FEATURE_GROUPS = [
+  { title: "Thông tin cơ bản", keys: ["Department", "Gender", "Age", "Education_Level"] },
+  {
+    title: "Quá trình làm việc",
+    keys: ["Hire_Date", "Years_At_Company", "Monthly_Salary", "Promotions"],
+  },
+  {
+    title: "Khối lượng và trải nghiệm",
+    keys: ["Work_Hours_Per_Week", "Overtime_Hours", "Sick_Days", "Employee_Satisfaction_Score"],
+  },
+];
+
+export function IndividualAnalysis({
+  employees,
+  initial,
+  onSelectionChange,
+  adapter,
+  illustrative = false,
+}: Props) {
+  const apiRef = useRef(
+    adapter ?? {
+      listSnapshots: listAiSnapshots,
+      getSnapshot: getAiSnapshot,
+      preview: previewAiEmployee,
+      predict: predictAiEmployee,
+      getResult: getAiResult,
+    },
+  );
   const [employeeId, setEmployeeId] = useState<number | undefined>(initial.employeeId);
   const [snapshots, setSnapshots] = useState<AiSnapshot[] | null>(null);
-  const [snapshotsError, setSnapshotsError] = useState("");
   const [snapshotId, setSnapshotId] = useState<number | undefined>(initial.snapshotId);
   const [snapshot, setSnapshot] = useState<AiSnapshot | null>(null);
   const [snapshotLoading, setSnapshotLoading] = useState(false);
   const [rate, setRate] = useState("");
   const [supplement, setSupplement] = useState<Record<string, string>>({});
   const [save, setSave] = useState(true);
-  const [busy, setBusy] = useState<"" | "preview" | "predict" | "result">("");
-  const [error, setError] = useState("");
+  const [busy, setBusy] = useState<Busy>("");
+  const [dataError, setDataError] = useState("");
   const [result, setResult] = useState<AiPrediction | null>(null);
-  const [resultInput, setResultInput] = useState(initial.resultId ? String(initial.resultId) : "");
+  const [resultError, setResultError] = useState("");
+  const [failedAction, setFailedAction] = useState<FailedAction>(null);
+  const [mobileTab, setMobileTab] = useState<"data" | "result">("data");
   const seq = useRef(0);
   const snapSeq = useRef(0);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const openedInitialResult = useRef(false);
 
-  // Load snapshot list whenever the employee changes; ignore stale responses.
   useEffect(() => {
+    const api = apiRef.current;
     const my = ++seq.current;
     setSnapshots(null);
-    setSnapshotsError("");
+    setDataError("");
     setSnapshot(null);
     setSupplement({});
     if (!employeeId) return;
-    api.listSnapshots(employeeId)
-      .then((r) => my === seq.current && setSnapshots(r.data))
-      .catch((e) => my === seq.current && setSnapshotsError(getApiErrorMessage(e, "Không tải được danh sách bản dữ liệu.")));
+    api
+      .listSnapshots(employeeId)
+      .then((response) => my === seq.current && setSnapshots(response.data))
+      .catch(
+        (error) =>
+          my === seq.current &&
+          setDataError(getApiErrorMessage(error, "Không tải được danh sách bản dữ liệu.")),
+      );
   }, [employeeId]);
 
-  // Load the selected stored snapshot (read-only GET).
   useEffect(() => {
+    const api = apiRef.current;
     if (!employeeId || !snapshotId) return;
     const my = ++snapSeq.current;
     setSnapshotLoading(true);
-    api.getSnapshot(employeeId, snapshotId)
-      .then((r) => my === snapSeq.current && setSnapshot(r.data))
-      .catch((e) => my === snapSeq.current && setError(getApiErrorMessage(e, "Không tải được bản dữ liệu.")))
+    api
+      .getSnapshot(employeeId, snapshotId)
+      .then((response) => my === snapSeq.current && setSnapshot(response.data))
+      .catch(
+        (error) =>
+          my === snapSeq.current &&
+          setDataError(getApiErrorMessage(error, "Không tải được bản dữ liệu.")),
+      )
       .finally(() => my === snapSeq.current && setSnapshotLoading(false));
   }, [employeeId, snapshotId]);
 
-  // A resultId in the URL opens a saved result via GET only — never a new prediction.
   useEffect(() => {
     if (openedInitialResult.current || !initial.resultId) return;
     openedInitialResult.current = true;
     void openResult(initial.resultId);
+    // The URL result is opened once; later selections are explicit user actions.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (result) {
-      headingRef.current?.focus({ preventScroll: true });
-      headingRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-    }
-  }, [result]);
+    if (result) headingRef.current?.focus({ preventScroll: true });
+  }, [result, mobileTab]);
 
   function chooseEmployee(id?: number) {
     setEmployeeId(id);
     setSnapshotId(undefined);
     setResult(null);
-    setError("");
+    setResultError("");
+    setFailedAction(null);
+    setMobileTab("data");
     onSelectionChange({ employeeId: id });
   }
+
   function chooseSnapshot(id?: number) {
     setSnapshotId(id);
     setSnapshot(null);
     setResult(null);
-    setError("");
+    setResultError("");
+    setFailedAction(null);
+    setMobileTab("data");
     onSelectionChange({ employeeId, snapshotId: id });
   }
 
   async function prepare() {
     if (!employeeId || busy) return;
     const extras: Record<string, string | number> = {};
-    for (const [k, v] of Object.entries(supplement)) if (v.trim()) extras[k] = FEATURE_CHOICES[k] || k === "Hire_Date" ? v : Number(v);
-    if (Object.values(extras).some((v) => typeof v === "number" && !Number.isFinite(v)) || (rate && (!Number.isFinite(Number(rate)) || Number(rate) < 1 || Number(rate) > 1_000_000))) {
-      setError("Vui lòng kiểm tra các giá trị số và tỷ giá (1–1.000.000 VND/USD).");
+    for (const [key, value] of Object.entries(supplement))
+      if (value.trim())
+        extras[key] = FEATURE_CHOICES[key] || key === "Hire_Date" ? value : Number(value);
+    if (
+      Object.values(extras).some((value) => typeof value === "number" && !Number.isFinite(value)) ||
+      (rate && (!Number.isFinite(Number(rate)) || Number(rate) < 1 || Number(rate) > 1_000_000))
+    ) {
+      setDataError("Vui lòng kiểm tra các giá trị số và tỷ giá (1–1.000.000 VND/USD).");
       return;
     }
     setBusy("preview");
-    setError("");
+    setDataError("");
     setResult(null);
+    setResultError("");
     try {
-      const r = await api.preview(employeeId, {
+      const response = await apiRef.current.preview(employeeId, {
         ...(rate ? { vndPerUsd: Number(rate) } : {}),
         ...(Object.keys(extras).length ? { supplementalFeatures: extras } : {}),
       });
-      setSnapshot(r.data);
-      if (r.data.snapshotId) {
+      setSnapshot(response.data);
+      if (response.data.snapshotId) {
         setSupplement({});
-        setSnapshotId(r.data.snapshotId);
-        onSelectionChange({ employeeId, snapshotId: r.data.snapshotId });
-        api.listSnapshots(employeeId).then((x) => setSnapshots(x.data)).catch(() => undefined);
+        setSnapshotId(response.data.snapshotId);
+        onSelectionChange({ employeeId, snapshotId: response.data.snapshotId });
+        apiRef.current
+          .listSnapshots(employeeId)
+          .then((next) => setSnapshots(next.data))
+          .catch(() => undefined);
       }
-    } catch (e) {
-      setError(getApiErrorMessage(e, "Không kiểm tra được dữ liệu."));
+    } catch (error) {
+      setDataError(getApiErrorMessage(error, "Không kiểm tra được dữ liệu."));
     } finally {
       setBusy("");
     }
   }
 
-  async function predict() {
+  async function runPrediction(saveOption = save, action: "predict" | "save" = "predict") {
     if (!employeeId || !snapshot?.snapshotId || !snapshot.ready || busy) return;
-    setBusy("predict");
-    setError("");
+    setBusy(action);
     setResult(null);
+    setResultError("");
+    setFailedAction(null);
+    setMobileTab("result");
     try {
-      const r = await api.predict(employeeId, snapshot.snapshotId, save);
-      setResult(r.data);
-      if (r.data.saved && r.data.predictionId) onSelectionChange({ employeeId, snapshotId: snapshot.snapshotId, resultId: r.data.predictionId });
-    } catch (e) {
-      if (e instanceof ApiError && e.status === 422 && e.details) setSnapshot(e.details as AiSnapshot);
-      setError(getApiErrorMessage(e, "Không chạy được mô hình AI."));
+      const response = await apiRef.current.predict(employeeId, snapshot.snapshotId, saveOption);
+      setResult(response.data);
+      if (response.data.saved && response.data.predictionId)
+        onSelectionChange({
+          employeeId,
+          snapshotId: snapshot.snapshotId,
+          resultId: response.data.predictionId,
+        });
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 422 && error.details)
+        setSnapshot(error.details as AiSnapshot);
+      setResultError(getApiErrorMessage(error, "Không chạy được mô hình AI."));
+      setFailedAction({ type: "predict" });
     } finally {
       setBusy("");
     }
   }
 
   async function openResult(id: number) {
+    if (busy) return;
     setBusy("result");
-    setError("");
+    setResult(null);
+    setResultError("");
+    setFailedAction(null);
+    setMobileTab("result");
     try {
-      const r = await api.getResult(id);
-      setResult(r.data);
-      onSelectionChange({ resultId: id });
-    } catch (e) {
-      setError(getApiErrorMessage(e, "Không mở được kết quả đã lưu."));
+      const response = await apiRef.current.getResult(id);
+      const nextSnapshot = response.data.preview;
+      setResult(response.data);
+      setSnapshot(nextSnapshot);
+      setEmployeeId(nextSnapshot.employee.id);
+      setSnapshotId(response.data.snapshotId ?? nextSnapshot.snapshotId ?? undefined);
+      onSelectionChange({
+        employeeId: nextSnapshot.employee.id,
+        snapshotId: response.data.snapshotId ?? nextSnapshot.snapshotId ?? undefined,
+        resultId: id,
+      });
+    } catch (error) {
+      setResultError(getApiErrorMessage(error, "Không mở được kết quả đã lưu."));
+      setFailedAction({ type: "result", id });
     } finally {
       setBusy("");
     }
   }
 
-  return (
-    <div className="space-y-4">
-      <div className="panel p-4">
-        <h2 className="text-base font-semibold">Chọn nhân viên và bản dữ liệu</h2>
-        <div className="mt-3 grid gap-4 md:grid-cols-2">
-          <label className="text-sm font-medium">
-            Nhân viên
-            <select className="field mt-1" value={employeeId ?? ""} onChange={(e) => chooseEmployee(e.target.value ? Number(e.target.value) : undefined)}>
-              <option value="">Chọn nhân viên</option>
-              {employees.map((e) => <option key={e.id} value={e.id}>{e.employeeCode} · {e.fullName}</option>)}
-            </select>
-          </label>
-          <label className="text-sm font-medium">
-            Bản dữ liệu đã lưu
-            <select className="field mt-1" value={snapshotId ?? ""} disabled={!employeeId || !snapshots} onChange={(e) => chooseSnapshot(e.target.value ? Number(e.target.value) : undefined)}>
-              <option value="">{!employeeId ? "Chọn nhân viên trước" : !snapshots ? "Đang tải…" : snapshots.length ? "Chọn bản dữ liệu" : "Chưa có bản dữ liệu"}</option>
-              {snapshots?.map((s) => s.snapshotId && <option key={s.snapshotId} value={s.snapshotId}>#{s.snapshotId} · {formatDateTime(s.snapshotDate || s.capturedAt)} · {s.ready ? "Sẵn sàng" : "Chưa đủ"}</option>)}
-            </select>
-          </label>
-        </div>
-        {snapshotsError && <div className="mt-3"><Notice tone="error">{snapshotsError}</Notice></div>}
+  const employee = employees.find((item) => item.id === employeeId);
+  const snapshotStatus = !snapshot
+    ? null
+    : snapshot.invalidFeatures?.length
+      ? "invalid"
+      : !snapshot.ready || snapshot.missingFeatures.length
+        ? "missing"
+        : "ready";
+  const dashboardState: PredictionDashboardState =
+    busy === "predict" || busy === "save" || busy === "result"
+      ? "loading"
+      : resultError
+        ? "error"
+        : result
+          ? "success"
+          : "idle";
+  const loadingLabel =
+    busy === "result"
+      ? "Đang mở kết quả đã lưu…"
+      : busy === "save"
+        ? "Đang dự đoán và lưu kết quả…"
+        : "Đang phân tích dữ liệu…";
+  const dataVisible = mobileTab === "data" ? "block" : "hidden min-[1200px]:block";
+  const resultVisible = mobileTab === "result" ? "block" : "hidden min-[1200px]:block";
 
-        {employeeId && (
-          <div className="mt-4 border-t pt-4">
-            <p className="text-sm text-muted-foreground">Tạo bản dữ liệu mới từ hồ sơ hiện tại. Thao tác này có thể lưu một bản dữ liệu mới vào hệ thống.</p>
-            <label className="mt-3 block max-w-sm text-sm font-medium">
-              Tỷ giá VND cho 1 USD <span className="font-normal text-muted-foreground">(chỉ dùng để quy đổi lương sang USD)</span>
-              <input className="field tabular mt-1" type="number" min={1} max={1000000} value={rate} onChange={(e) => setRate(e.target.value)} />
-            </label>
-            {!!snapshot?.missingFeatures?.length && !snapshot.ready && (
-              <div className="mt-3">
-                <p className="text-sm">Bổ sung giá trị còn thiếu. Giá trị bổ sung chỉ dùng cho bản dữ liệu này, không sửa hồ sơ nhân viên, và được đánh dấu nguồn thủ công.</p>
-                <div className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {snapshot.missingFeatures.map((key) => (
-                    <label key={key} className="text-sm font-medium">
-                      {featureLabel(key)} {FEATURE_UNITS[key] && <span className="font-normal text-muted-foreground">({FEATURE_UNITS[key]})</span>}
-                      {FEATURE_CHOICES[key] ? (
-                        <select className="field mt-1" value={supplement[key] || ""} onChange={(e) => setSupplement((v) => ({ ...v, [key]: e.target.value }))}>
-                          <option value="">Chọn giá trị</option>
-                          {FEATURE_CHOICES[key].map((c) => <option key={c} value={c}>{c}</option>)}
-                        </select>
-                      ) : (
-                        <input className="field tabular mt-1" type={key === "Hire_Date" ? "date" : "number"} value={supplement[key] || ""} onChange={(e) => setSupplement((v) => ({ ...v, [key]: e.target.value }))} />
-                      )}
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-            <button type="button" className="btn btn-secondary mt-3" disabled={!!busy} onClick={() => void prepare()}>
-              {busy === "preview" ? "Đang kiểm tra…" : "Kiểm tra và tạo bản dữ liệu"}
-            </button>
+  return (
+    <div className="space-y-5">
+      <section
+        className={`panel p-4 ${mobileTab === "result" ? "hidden min-[1200px]:block" : ""}`}
+        aria-labelledby="prediction-selector-heading"
+      >
+        <h2 id="prediction-selector-heading" className="text-base font-semibold">
+          Chọn nhân viên và bản dữ liệu
+        </h2>
+        <div className="mt-3 grid items-end gap-3 min-[768px]:grid-cols-2 min-[1200px]:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_auto]">
+          <label className="text-xs font-medium text-muted-foreground">
+            Nhân viên
+            <select
+              aria-label="Nhân viên"
+              className="field mt-1.5 text-foreground"
+              value={employeeId ?? ""}
+              onChange={(event) =>
+                chooseEmployee(event.target.value ? Number(event.target.value) : undefined)
+              }
+            >
+              <option value="">Chọn nhân viên</option>
+              {employees.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.employeeCode} · {item.fullName}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs font-medium text-muted-foreground">
+            Bản dữ liệu
+            <select
+              aria-label="Bản dữ liệu"
+              className="field mt-1.5 text-foreground"
+              value={snapshotId ?? ""}
+              disabled={!employeeId || !snapshots}
+              onChange={(event) =>
+                chooseSnapshot(event.target.value ? Number(event.target.value) : undefined)
+              }
+            >
+              <option value="">
+                {!employeeId
+                  ? "Chọn nhân viên trước"
+                  : !snapshots
+                    ? "Đang tải…"
+                    : snapshots.length
+                      ? "Chọn bản dữ liệu"
+                      : "Chưa có bản dữ liệu"}
+              </option>
+              {snapshots?.map(
+                (item) =>
+                  item.snapshotId && (
+                    <option key={item.snapshotId} value={item.snapshotId}>
+                      Bản {item.snapshotId} · {formatDateTime(item.snapshotDate || item.capturedAt)}{" "}
+                      · {item.ready ? "Sẵn sàng" : "Thiếu dữ liệu"}
+                    </option>
+                  ),
+              )}
+            </select>
+          </label>
+          <div>
+            <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
+              Trạng thái
+            </span>
+            <SnapshotStatus status={snapshotStatus} />
           </div>
+          <button
+            type="button"
+            className="btn btn-secondary whitespace-nowrap"
+            disabled={!employeeId || !!busy}
+            onClick={() => void prepare()}
+          >
+            {busy === "preview" ? "Đang kiểm tra…" : "Kiểm tra và tạo bản dữ liệu"}
+          </button>
+        </div>
+        {employeeId && (
+          <details className="mt-3 border-t pt-3 text-sm" open={!!snapshot && !snapshot.ready}>
+            <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
+              Tùy chọn kiểm tra và bổ sung dữ liệu
+            </summary>
+            <div className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              <label className="text-xs font-medium">
+                Tỷ giá VND cho 1 USD
+                <input
+                  className="field tabular mt-1.5"
+                  type="number"
+                  min={1}
+                  max={1000000}
+                  value={rate}
+                  onChange={(event) => setRate(event.target.value)}
+                />
+                <span className="mt-1 block font-normal text-muted-foreground">
+                  Chỉ dùng để quy đổi lương khi tạo bản dữ liệu.
+                </span>
+              </label>
+              {snapshot?.missingFeatures.map((key) => (
+                <label key={key} className="text-xs font-medium">
+                  {featureLabel(key)}
+                  {FEATURE_UNITS[key] ? ` (${FEATURE_UNITS[key]})` : ""}
+                  {FEATURE_CHOICES[key] ? (
+                    <select
+                      className="field mt-1.5"
+                      value={supplement[key] || ""}
+                      onChange={(event) =>
+                        setSupplement((current) => ({ ...current, [key]: event.target.value }))
+                      }
+                    >
+                      <option value="">Chọn giá trị</option>
+                      {FEATURE_CHOICES[key].map((choice) => (
+                        <option key={choice} value={choice}>
+                          {choice}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      className="field tabular mt-1.5"
+                      type={key === "Hire_Date" ? "date" : "number"}
+                      value={supplement[key] || ""}
+                      onChange={(event) =>
+                        setSupplement((current) => ({ ...current, [key]: event.target.value }))
+                      }
+                    />
+                  )}
+                </label>
+              ))}
+            </div>
+          </details>
         )}
+      </section>
+
+      <div
+        role="tablist"
+        aria-label="Nội dung dự đoán cá nhân"
+        className="grid grid-cols-2 rounded-lg bg-muted p-1 min-[1200px]:hidden"
+      >
+        {(["data", "result"] as const).map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            role="tab"
+            aria-selected={mobileTab === tab}
+            onClick={() => setMobileTab(tab)}
+            className={`h-9 rounded-md text-sm font-medium ${mobileTab === tab ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}
+          >
+            {tab === "data" ? "Dữ liệu" : "Kết quả"}
+          </button>
+        ))}
       </div>
 
-      {snapshotLoading && <Loading label="Đang tải bản dữ liệu…" />}
-      {snapshot && (
-        <div className="panel p-4">
-          <h2 className="text-base font-semibold">
-            {snapshot.ready ? `Bản dữ liệu #${snapshot.snapshotId} sẵn sàng` : "Bản dữ liệu chưa đủ để dự đoán"}
-          </h2>
-          {!snapshot.ready && !!snapshot.missingFeatures?.length && <p className="mt-1 text-sm text-warning">Thiếu: {snapshot.missingFeatures.map(featureLabel).join(", ")}</p>}
-          {!!snapshot.invalidFeatures?.length && <p className="mt-1 text-sm text-warning">Không hợp lệ: {snapshot.invalidFeatures.map(featureLabel).join(", ")}</p>}
-          {!!snapshot.issues?.length && <ul className="mt-1 list-disc pl-5 text-sm text-warning">{snapshot.issues.map((i) => <li key={i}>{i}</li>)}</ul>}
-          <dl className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            {Object.entries(snapshot.features).map(([k, v]) => (
-              <div key={k} className="rounded-md bg-muted p-2">
-                <dt className="text-xs text-muted-foreground">{featureLabel(k)}</dt>
-                <dd className="tabular text-sm font-medium">{String(v)} {FEATURE_UNITS[k] && <span className="text-xs font-normal text-muted-foreground">{FEATURE_UNITS[k]}</span>}</dd>
-                <dd className="text-xs text-muted-foreground">{provenanceLabel(snapshot.provenance?.[k])}</dd>
+      <div className="grid items-start gap-6 min-[1200px]:grid-cols-[minmax(0,59fr)_minmax(0,41fr)]">
+        <div className={dataVisible}>
+          <section className="panel overflow-hidden" aria-labelledby="prediction-input-heading">
+            <div className="flex flex-wrap items-start justify-between gap-3 border-b px-5 py-4">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
+                  Dữ liệu dùng để dự đoán
+                </p>
+                <h2 id="prediction-input-heading" className="mt-1 text-base font-semibold">
+                  {snapshot?.snapshotId
+                    ? `Bản dữ liệu #${snapshot.snapshotId}`
+                    : "Chưa chọn bản dữ liệu"}
+                </h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Ngày tạo: {formatDateTime(snapshot?.snapshotDate || snapshot?.capturedAt)}
+                </p>
               </div>
-            ))}
-          </dl>
-          {snapshot.ready && (
-            <div className="mt-4 flex flex-wrap items-center gap-4">
+              <SnapshotStatus status={snapshotStatus} />
+            </div>
+            {dataError && (
+              <div className="px-5 pt-4">
+                <Notice tone="error">{dataError}</Notice>
+              </div>
+            )}
+            <div className="max-h-none overflow-y-auto px-5 py-4 min-[1200px]:max-h-[calc(100vh-25rem)] min-[1200px]:min-h-72">
+              {snapshotLoading ? (
+                <Loading label="Đang tải bản dữ liệu…" />
+              ) : !snapshot ? (
+                <Empty>
+                  Chọn nhân viên và bản dữ liệu, hoặc tạo bản dữ liệu mới từ hồ sơ hiện tại.
+                </Empty>
+              ) : (
+                <>
+                  <div className="mb-4 rounded-lg bg-muted px-3 py-2.5 text-sm">
+                    <span className="font-medium">{snapshot.employee.fullName}</span>
+                    <span className="text-muted-foreground">
+                      {" "}
+                      · {snapshot.employee.employeeCode}
+                    </span>
+                  </div>
+                  {snapshotStatus !== "ready" && (
+                    <Notice
+                      tone="warning"
+                      title={
+                        snapshotStatus === "invalid" ? "Dữ liệu không hợp lệ" : "Dữ liệu còn thiếu"
+                      }
+                    >
+                      {[
+                        ...snapshot.missingFeatures.map((key) => `Thiếu ${featureLabel(key)}`),
+                        ...(snapshot.invalidFeatures ?? []).map(
+                          (key) => `Không hợp lệ: ${featureLabel(key)}`,
+                        ),
+                        ...snapshot.issues,
+                      ].join(". ")}
+                    </Notice>
+                  )}
+                  <div className="mt-4 space-y-5">
+                    <FeatureGroups snapshot={snapshot} />
+                  </div>
+                  <details className="mt-5 border-t pt-3 text-xs">
+                    <summary className="cursor-pointer font-medium">Nguồn dữ liệu</summary>
+                    <dl className="mt-3 space-y-2">
+                      {Object.keys(snapshot.features).map((key) => (
+                        <div key={key} className="flex justify-between gap-4">
+                          <dt className="text-muted-foreground">{featureLabel(key)}</dt>
+                          <dd className="text-right">
+                            {provenanceLabel(snapshot.provenance?.[key])}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </details>
+                </>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t bg-card px-5 py-4">
               <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={save} onChange={(e) => setSave(e.target.checked)} /> Lưu kết quả
+                <input
+                  type="checkbox"
+                  checked={save}
+                  disabled={!!busy}
+                  onChange={(event) => setSave(event.target.checked)}
+                />
+                Lưu kết quả
               </label>
-              <button type="button" className="btn btn-primary" disabled={!!busy} onClick={() => void predict()}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={!snapshot?.ready || !!busy}
+                onClick={() => void runPrediction()}
+              >
+                <Play className="h-4 w-4" aria-hidden />
                 {busy === "predict" ? "Đang dự đoán…" : "Dự đoán"}
               </button>
             </div>
-          )}
+          </section>
         </div>
-      )}
-
-      <form
-        className="flex flex-wrap items-end gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!/^[1-9]\d*$/.test(resultInput)) return setError("Vui lòng nhập mã kết quả hợp lệ.");
-          void openResult(Number(resultInput));
-        }}
-      >
-        <label className="text-sm font-medium">
-          Mở kết quả đã lưu
-          <input className="field tabular mt-1 w-40" inputMode="numeric" placeholder="Mã kết quả" value={resultInput} onChange={(e) => setResultInput(e.target.value)} />
-        </label>
-        <button type="submit" className="btn btn-secondary" disabled={!!busy}>{busy === "result" ? "Đang mở…" : "Mở"}</button>
-      </form>
-
-      {error && <Notice tone="error">{error}</Notice>}
-      {busy === "predict" && <Loading label="Đang gửi yêu cầu dự đoán qua ERIS…" />}
-      {result ? <EmployeeDashboard ref={headingRef} result={result} illustrative={illustrative} policyLoader={policyLoader} /> : !busy && !snapshot && <Empty>Chọn nhân viên và bản dữ liệu để chạy dự đoán.</Empty>}
+        <div className={resultVisible}>
+          <EmployeePredictionDashboard
+            ref={headingRef}
+            state={dashboardState}
+            result={result}
+            snapshot={snapshot}
+            employee={employee}
+            error={resultError}
+            loadingLabel={loadingLabel}
+            illustrative={illustrative}
+            busy={!!busy}
+            onRetry={
+              failedAction
+                ? () => {
+                    if (failedAction.type === "result") void openResult(failedAction.id);
+                    else void runPrediction();
+                  }
+                : undefined
+            }
+            onPredict={() => void runPrediction()}
+            onSave={() => void runPrediction(true, "save")}
+            onOpenSaved={(id) => void openResult(id)}
+          />
+        </div>
+      </div>
     </div>
   );
+}
+
+function SnapshotStatus({ status }: { status: "ready" | "missing" | "invalid" | null }) {
+  if (!status)
+    return <span className="flex h-10 items-center text-sm text-muted-foreground">Chưa chọn</span>;
+  const config =
+    status === "ready"
+      ? { label: "Sẵn sàng", className: "bg-mint text-success", Icon: CheckCircle2 }
+      : {
+          label: status === "invalid" ? "Không hợp lệ" : "Thiếu dữ liệu",
+          className:
+            status === "invalid"
+              ? "bg-error-surface text-destructive"
+              : "bg-warning-surface text-warning",
+          Icon: AlertTriangle,
+        };
+  return (
+    <span
+      className={`inline-flex h-10 items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-xs font-medium ${config.className}`}
+    >
+      <config.Icon className="h-3.5 w-3.5" aria-hidden />
+      {config.label}
+    </span>
+  );
+}
+
+function FeatureGroups({ snapshot }: { snapshot: AiSnapshot }) {
+  const grouped = new Set(FEATURE_GROUPS.flatMap((group) => group.keys));
+  const extra = Object.keys(snapshot.features).filter((key) => !grouped.has(key));
+  const groups = [
+    ...FEATURE_GROUPS,
+    ...(extra.length ? [{ title: "Thông tin khác", keys: extra }] : []),
+  ];
+  return groups.map((group) => {
+    const keys = group.keys.filter((key) => key in snapshot.features);
+    if (!keys.length) return null;
+    return (
+      <section key={group.title}>
+        <h3 className="text-sm font-semibold">{group.title}</h3>
+        <dl className="mt-2">
+          {keys.map((key) => (
+            <div
+              key={key}
+              className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-4 border-b py-2.5 text-sm last:border-0"
+            >
+              <dt className="text-muted-foreground">{featureLabel(key)}</dt>
+              <dd className="tabular text-right font-medium">
+                {key === "Hire_Date"
+                  ? formatDateTime(String(snapshot.features[key]))
+                  : String(snapshot.features[key] ?? "—")}
+                {FEATURE_UNITS[key] && key !== "Hire_Date" && (
+                  <span className="ml-1 text-xs font-normal text-muted-foreground">
+                    {FEATURE_UNITS[key]}
+                  </span>
+                )}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+    );
+  });
 }
