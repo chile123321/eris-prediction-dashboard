@@ -8,15 +8,36 @@
 // hosting already compresses at the edge.
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { loadEnv } from "vite";
+
+const localEnv = loadEnv("development", process.cwd(), "");
+const configuredPort = Number.parseInt(localEnv["ERIS_DEV_PORT"] || "", 10);
+const devPort =
+  Number.isInteger(configuredPort) && configuredPort > 0 && configuredPort <= 65_535
+    ? configuredPort
+    : 8081;
+
+function getApiProxyTarget(value: string | undefined) {
+  const fallback = "http://127.0.0.1:3000";
+  if (!value) return fallback;
+  try {
+    const target = new URL(value);
+    return target.protocol === "http:" || target.protocol === "https:" ? target.origin : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+const apiProxyTarget = getApiProxyTarget(localEnv["ERIS_API_PROXY_TARGET"]);
 
 export default defineConfig({
   vite: {
     server: {
-      port: 8081,
+      port: devPort,
       strictPort: true,
       proxy: {
         // Express mounts /api itself; retain the prefix and refresh-cookie path.
-        "/api": { target: "http://127.0.0.1:3000", changeOrigin: true },
+        "/api": { target: apiProxyTarget, changeOrigin: true },
       },
     },
   },

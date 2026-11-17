@@ -16,6 +16,11 @@ dist-ssr
 .nitro
 *.local
 
+# Local environment configuration (never commit secrets or machine-specific ports)
+.env
+.env.local
+.env.*.local
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
