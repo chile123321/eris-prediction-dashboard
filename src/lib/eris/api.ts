@@ -236,6 +236,8 @@ export type AiModelOutput = {
   shap_units?: string;
   explainer?: string;
   riskLevel?: string | null;
+  /** The local API may return the same field in snake_case. */
+  risk_level?: string | null;
   predictionLabel?: string | null;
   forecastHorizon?: string | null;
 };
